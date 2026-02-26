@@ -1,0 +1,31 @@
+# === 核心数据库 ===
+akshare>=1.10.0
+tushare>=1.2.89
+baostock>=0.8.8
+
+# === Web 服务 ===
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+
+# === 缓存与调度 ===
+redis>=5.0.0
+apscheduler>=3.10.0
+
+# === 日志与监控 ===
+loguru>=0.7.0
+
+# === 数据处理 ===
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+
+# === 网络与工具 ===
+requests>=2.31.0
+lxml>=4.9.0
+python-dotenv>=1.0.0
+retry>=0.9.2
+
+# === 交易执行（可选） ===
+# xtquant                   # QMT/miniQMT（需从券商获取）
+# PoboAPI                   # PTrade（内置）

@@ -1,0 +1,67 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ===== Virtual Environment =====
+venv/
+env/
+ENV/
+quant_env/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===== Environment Variables =====
+.env
+.env.local
+.env.*.local
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Data =====
+data/
+*.csv
+*.xlsx
+*.db
+*.sqlite3
+
+# ===== Reports =====
+reports/*.md
+reports/*.html
+reports/*.pdf
+
+# ===== Backups =====
+backups/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Secrets =====
+*.pem
+*.key
+secrets/

@@ -1,0 +1,71 @@
+{
+  "global_config": {
+    "market": ["SH", "SZ"],
+    "timezone": "Asia/Shanghai",
+    "language": "zh-CN",
+    "log_level": "INFO",
+    "data_cache_ttl_seconds": 300,
+    "max_retry_times": 3,
+    "retry_interval_seconds": 2
+  },
+  "data_sources": {
+    "akshare": { "enabled": true, "priority": 1, "timeout": 10 },
+    "tushare": { "enabled": true, "token": "${TUSHARE_TOKEN}", "priority": 2, "timeout": 15 },
+    "ths": { "enabled": true, "token": "${THS_TOKEN}", "priority": 3, "timeout": 15 },
+    "baostock": { "enabled": true, "priority": 4, "timeout": 20 }
+  },
+  "cache": {
+    "enabled": true,
+    "backend": "redis",
+    "redis_url": "redis://127.0.0.1:6379/0",
+    "default_ttl": 300,
+    "realtime_ttl": 30,
+    "history_ttl": 86400
+  },
+  "notification": {
+    "feishu_webhook": "${FEISHU_WEBHOOK_URL}",
+    "dingtalk_webhook": "${DINGTALK_WEBHOOK_URL}",
+    "dingtalk_secret": "${DINGTALK_SECRET}",
+    "wechat_pushplus_token": "${PUSHPLUS_TOKEN}",
+    "notification_levels": {
+      "daily_report": ["feishu"],
+      "warning": ["feishu", "dingtalk"],
+      "critical": ["feishu", "dingtalk", "wechat"]
+    }
+  },
+  "execution": {
+    "broker_type": "ptrade",
+    "ptrade_host": "http://127.0.0.1:8888",
+    "ptrade_token": "${PTRADE_TOKEN}",
+    "max_single_order_pct": 0.05,
+    "max_daily_trade_count": 10,
+    "require_human_confirm": true,
+    "order_timeout_seconds": 5,
+    "enable_paper_trading": true
+  },
+  "risk": {
+    "stop_loss_pct": 0.08,
+    "take_profit_pct": 0.20,
+    "trailing_stop_pct": 0.05,
+    "max_drawdown_alert": 0.15,
+    "max_position_pct": 0.20,
+    "max_total_position_pct": 0.80,
+    "pause_on_market_drop": 0.02,
+    "daily_loss_limit_pct": 0.02,
+    "consecutive_loss_days_limit": 3,
+    "north_flow_alert_threshold": -80,
+    "sector_concentration_limit": 0.40
+  },
+  "logging": {
+    "log_dir": "./logs",
+    "rotation": "10 MB",
+    "retention": "30 days",
+    "format": "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}:{function}:{line} | {message}"
+  },
+  "backup": {
+    "enabled": true,
+    "backup_dir": "./backups",
+    "backup_interval_hours": 24,
+    "max_backup_count": 30
+  }
+}
