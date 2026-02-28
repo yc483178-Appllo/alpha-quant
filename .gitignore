@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+quant_env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Local config with secrets
+.env
+.env.local
+
+# Cache
+cache/
+*.cache
+
+# Cloud storage data (may contain sensitive reports)
+cloud_storage/Reports/
+cloud_storage/Signals/
+cloud_storage/Logs/
+
+# Trade calendar cache
+trade_calendar_cache.json
