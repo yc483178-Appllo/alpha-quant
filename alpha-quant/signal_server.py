@@ -1,9 +1,11 @@
-# signal_server.py --- Alpha Quant 交易信号服务器
+# signal_server.py --- Alpha Quant 交易信号服务器 V5.0
 # 接收来自 Kimi Claw 的交易信号，推送给 PTrade/QMT 执行
+# 集成 Dashboard V2.0 API
 
 import os
 import json
-from flask import Flask, request, jsonify
+import random
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -15,7 +17,7 @@ import time
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 # 日志配置
@@ -183,7 +185,209 @@ def notify_for_confirmation(signal: Dict):
         logger.error(f"飞书通知推送失败: {e}")
 
 
-# ==================== API 路由 ====================
+# ==================== Dashboard V2.0 API 路由 ====================
+
+@app.route("/dashboard")
+def dashboard_v2():
+    """Dashboard V2.0 主页"""
+    return send_from_directory('static', 'dashboard_v2_full.html')
+
+
+@app.route("/api/v2/overview")
+def api_v2_overview():
+    """返回总览数据（实时行情+风控+情绪）"""
+    # 模拟数据，实际应从data_gateway获取
+    return jsonify({
+        "code": 200,
+        "data": {
+            "indices": {
+                "上证指数": {"price": 3387.5, "change_pct": 0.48, "volume": 4200},
+                "深证成指": {"price": 10980.3, "change_pct": 0.71, "volume": 5600},
+                "创业板指": {"price": 2250.8, "change_pct": 0.89, "volume": 2800}
+            },
+            "market_sentiment": {
+                "overall": 0.35,
+                "phase": "回暖期",
+                "advice": "轻仓试水，关注AI应用端"
+            },
+            "risk_status": {
+                "level": "GREEN",
+                "var_95": -1.2,
+                "max_drawdown": -5.8
+            },
+            "broker": {
+                "connected": True,
+                "latency_ms": 45,
+                "available_cash": 150000
+            }
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route("/api/v2/drl-status")
+def api_v2_drl_status():
+    """返回DRL Agent状态"""
+    return jsonify({
+        "code": 200,
+        "data": {
+            "training": False,
+            "episode": 2450,
+            "confidence": 0.72,
+            "loss": 0.0342,
+            "status": "converged",
+            "recommended_weights": {
+                "300750": 0.12,
+                "601012": 0.10,
+                "002594": 0.08,
+                "600519": 0.05
+            },
+            "expected_sharpe_improvement": "+0.15"
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route("/api/v2/sentiment")
+def api_v2_sentiment():
+    """返回舆情分析数据"""
+    return jsonify({
+        "code": 200,
+        "data": {
+            "overall": 0.35,
+            "sector_heatmap": {
+                "新能源": 0.72,
+                "科技": 0.55,
+                "银行": 0.38,
+                "消费": 0.15,
+                "医药": -0.25,
+                "地产": -0.45
+            },
+            "top_bullish": [
+                {"code": "300750", "name": "宁德时代", "score": 0.78, "momentum": 0.25},
+                {"code": "002594", "name": "比亚迪", "score": 0.82, "momentum": 0.18}
+            ],
+            "top_bearish": [
+                {"code": "600519", "name": "贵州茅台", "score": -0.42, "momentum": -0.35},
+                {"code": "603259", "name": "药明康德", "score": -0.55, "momentum": -0.28}
+            ],
+            "anomaly_alerts": []
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route("/api/v2/risk")
+def api_v2_risk():
+    """返回VaR+压力测试+风险分解"""
+    return jsonify({
+        "code": 200,
+        "data": {
+            "var": {
+                "1d_95": -1.82,
+                "5d_95": -3.95,
+                "30d_95": -8.21
+            },
+            "risk_decomposition": {
+                "市场风险": 42,
+                "行业风险": 25,
+                "个股风险": 18,
+                "流动性风险": 8,
+                "情绪风险": 7
+            },
+            "stress_test": [
+                {"scenario": "2015股灾重现", "impact": -18.5},
+                {"scenario": "2020疫情冲击", "impact": -12.3},
+                {"scenario": "加息100bp", "impact": -6.7},
+                {"scenario": "北向大幅流出", "impact": -4.2}
+            ]
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route("/api/v2/trade", methods=["POST"])
+def api_v2_trade():
+    """接收交易指令（需Guard审批）"""
+    data = request.json
+    
+    # 验证必要字段
+    required = ["code", "side", "price", "qty"]
+    for field in required:
+        if field not in data:
+            return jsonify({"code": 400, "error": f"缺少字段: {field}"}), 400
+    
+    # 模拟Guard审批
+    risk_level = "medium"
+    if data.get("qty", 0) * data.get("price", 0) > 100000:
+        risk_level = "high"
+    
+    # 创建信号
+    result = SignalManager.add_signal(
+        code=data["code"],
+        action=data["side"],
+        price=data["price"],
+        amount=data["qty"],
+        reason=data.get("reason", "Dashboard交易"),
+        strategy=data.get("strategy", "manual"),
+        risk_level=risk_level,
+        source="dashboard_v2"
+    )
+    
+    if result["success"]:
+        return jsonify({
+            "code": 200,
+            "success": True,
+            "order_id": result["signal"]["id"],
+            "status": "pending",
+            "message": "交易指令已提交，等待Guard审批" if CONFIG["require_human_confirm"] else "交易指令已执行"
+        })
+    else:
+        return jsonify({"code": 429, "success": False, "error": result["error"]}), 429
+
+
+@app.route("/api/v2/agents")
+def api_v2_agents():
+    """返回8个Agent状态"""
+    return jsonify({
+        "code": 200,
+        "data": {
+            "Chief": {"status": "active", "msg": "已整合DRL+情绪信号，审批3条"},
+            "Scout": {"status": "idle", "msg": "舆情报告已发送，情绪：回暖期"},
+            "Picker": {"status": "active", "msg": "综合5策略+情绪因子选出8只标的"},
+            "Guard": {"status": "alert", "msg": "平安银行浮亏接近预警线"},
+            "Trader": {"status": "active", "msg": "已通过PTrade执行2笔，滑点0.02%"},
+            "Review": {"status": "idle", "msg": "等待收盘后启动绩效归因"},
+            "DRL": {"status": "active", "msg": "置信度72%，建议增配新能源+3%"},
+            "Sentiment": {"status": "active", "msg": "贵州茅台负面舆情+45%，建议减仓"}
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route("/api/v2/portfolio")
+def api_v2_portfolio():
+    """返回持仓数据"""
+    return jsonify({
+        "code": 200,
+        "data": {
+            "total_assets": 1085000,
+            "cash": 150000,
+            "market_value": 935000,
+            "total_return": 8.5,
+            "positions": [
+                {"code": "600036", "name": "招商银行", "qty": 1400, "cost": 35.20, "price": 36.8, "pnl": 8.6},
+                {"code": "000001", "name": "平安银行", "qty": 2000, "cost": 12.50, "price": 12.1, "pnl": -3.2},
+                {"code": "300750", "name": "宁德时代", "qty": 200, "cost": 185.0, "price": 195.5, "pnl": 5.7},
+                {"code": "002475", "name": "立讯精密", "qty": 1000, "cost": 28.6, "price": 30.2, "pnl": 5.6},
+                {"code": "601012", "name": "隆基绿能", "qty": 1500, "cost": 22.8, "price": 21.5, "pnl": -5.7}
+            ]
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+# ==================== 原有API 路由 ====================
 
 @app.route("/api/signals", methods=["GET"])
 def get_signals():
@@ -314,6 +518,7 @@ if __name__ == "__main__":
     cleanup_thread.start()
     
     logger.info(f"📡 信号服务器启动于 http://{CONFIG['host']}:{CONFIG['port']}")
+    logger.info(f"Dashboard V2.0: http://{CONFIG['host']}:{CONFIG['port']}/dashboard")
     logger.info(f"人工确认: {'开启' if CONFIG['require_human_confirm'] else '关闭'}")
     logger.info(f"飞书通知: {'开启' if CONFIG['feishu_webhook'] else '未配置'}")
     
