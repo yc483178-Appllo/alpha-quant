@@ -1,0 +1,101 @@
+{
+  "version": "5.0",
+  "last_updated": "2026-03-03",
+  "modules": {
+    "total": 9,
+    "core": [
+      "drl_portfolio_agent.py",
+      "sentiment_pipeline.py",
+      "portfolio_optimizer.py",
+      "broker_interface.py",
+      "order_management.py",
+      "learning_engine.py"
+    ],
+    "enhanced": [
+      "signal_server.py",
+      "alpha_dashboard_v2.html"
+    ]
+  },
+  "agents": {
+    "total": 8,
+    "v4": ["Chief", "Scout", "Picker", "Guard", "Trader", "Review"],
+    "v5_new": ["DRL", "Sentiment"]
+  },
+  "lines_of_code": {
+    "drl_portfolio_agent": 200,
+    "sentiment_pipeline": 250,
+    "portfolio_optimizer": 200,
+    "broker_interface": 250,
+    "order_management": 120,
+    "learning_engine": 300,
+    "alpha_dashboard_v2": 600,
+    "total": 1920
+  },
+  "api_endpoints": [
+    {"path": "/dashboard", "method": "GET", "description": "看板V2.0页面"},
+    {"path": "/api/v2/overview", "method": "GET", "description": "总览数据"},
+    {"path": "/api/v2/positions", "method": "GET", "description": "持仓数据"},
+    {"path": "/api/v2/signals", "method": "GET", "description": "信号队列"},
+    {"path": "/api/v2/agents", "method": "GET", "description": "Agent状态"},
+    {"path": "/api/v2/sentiment", "method": "GET", "description": "舆情数据"},
+    {"path": "/api/v2/drl-status", "method": "GET", "description": "DRL状态"},
+    {"path": "/api/v2/risk", "method": "GET", "description": "VaR+压力测试"},
+    {"path": "/api/v2/portfolio-analytics", "method": "GET", "description": "绩效归因"},
+    {"path": "/api/v2/trade", "method": "POST", "description": "提交交易指令"}
+  ],
+  "upgrade_path": {
+    "duration": "10周",
+    "phases": 7,
+    "paper_trading_weeks": 4,
+    "live_trading_start": "第9周"
+  }
+}
+
+---
+
+## 验证报告 (2026-03-03)
+
+### 目录结构状态
+✅ core/ - 6个核心模块已就位
+✅ agents/ - 3个V5.0 Agent提示词文件已创建
+✅ templates/ - Dashboard V2.0模板已迁移
+✅ data/ - 清单文件已创建
+✅ logs/ - 目录已创建
+✅ backups/ - 目录已创建
+✅ models/ - 目录已创建 (用于DRL模型存储)
+
+### 文件迁移状态
+✅ broker_integration.py → core/broker_interface.py
+✅ oms.py → core/order_management.py
+✅ continuous_learning.py → core/learning_engine.py
+✅ agent_bus.py → core/agent_bus.py
+✅ drl_portfolio_agent.py → core/drl_portfolio_agent.py
+✅ portfolio_optimizer.py → core/portfolio_optimizer.py
+✅ sentiment_pipeline.py → core/sentiment_pipeline.py
+✅ dashboard_v2_full.html → templates/alpha_dashboard_v2.html
+
+### 路径引用修复
+✅ drl_integration_demo.py - 已更新为 core.drl_portfolio_agent
+✅ modules/chief_agent.py - 已更新为 core.drl_portfolio_agent
+✅ chief_integration_demo.py - 已更新为 core.agent_bus
+
+### 遗留模块 (modules/)
+以下模块仍保留在 modules/ 目录，供向后兼容:
+- chief_agent.py
+- cloud_storage.py
+- config_manager.py
+- data_provider.py
+- logger.py
+- market_research.py
+- notification.py
+- notification_service.py
+- notifier.py
+- report_generator.py
+- risk_manager.py
+- risk_monitor.py
+- risk_monitor_with_notification.py
+- stock_screener.py
+- stock_screener_enhanced.py
+- technical_analysis.py
+- ths_provider.py
+- trade_calendar.py
