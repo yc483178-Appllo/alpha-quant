@@ -44,6 +44,13 @@ retry>=0.9.2
 # === 组合优化（V5.0新增） ===
 # scipy>=1.11.0 已在上文添加
 
+# === V5.0 新增依赖 ===
+# stable-baselines3>=2.1.0      # DRL强化学习（可选，纯NumPy版本已内置）
+optuna>=3.4.0                  # 贝叶斯超参优化
+beautifulsoup4>=4.12.0         # 新闻爬取解析
+newspaper3k>=0.2.8             # 新闻文章提取
+jieba>=0.42.1                  # 中文分词
+
 # === 交易执行（可选） ===
 # xtquant                   # QMT/miniQMT（需从券商获取）
 # PoboAPI                   # PTrade（内置）
