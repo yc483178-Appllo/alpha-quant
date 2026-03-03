@@ -40,11 +40,14 @@ class NotificationManager:
                 print(f"发送 {channel} 通知失败: {e}")
     
     def _send_feishu(self, message: str, title: str = None):
-        """发送飞书通知"""
+        """发送飞书通知（支持签名校验）"""
         webhook_url = self.config.get('feishu_webhook')
+        secret = self.config.get('feishu_secret')  # 签名密钥
+        
         if not webhook_url:
             return
         
+        # 构建payload
         payload = {
             "msg_type": "text",
             "content": {
@@ -52,11 +55,32 @@ class NotificationManager:
             }
         }
         
-        response = requests.post(webhook_url, json=payload, timeout=10)
+        # 如果有签名密钥，计算签名
+        if secret:
+            timestamp = str(int(time.time()))
+            # 飞书签名校验：timestamp + "\n" + secret 的 HMAC-SHA256，再Base64编码
+            string_to_sign = f"{timestamp}\n{secret}"
+            hmac_code = hmac.new(
+                string_to_sign.encode('utf-8'),
+                digestmod=hashlib.sha256
+            ).digest()
+            sign = base64.b64encode(hmac_code).decode('utf-8')
+            
+            # 签名和时间戳放在payload中（不是请求头）
+            payload["timestamp"] = timestamp
+            payload["sign"] = sign
+        
+        headers = {"Content-Type": "application/json"}
+        
+        response = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
         if response.status_code == 200:
-            print("✅ 飞书通知发送成功")
+            result = response.json()
+            if result.get("code") == 0:
+                print("✅ 飞书通知发送成功")
+            else:
+                print(f"❌ 飞书通知发送失败: {result.get('msg', '未知错误')}")
         else:
-            print(f"❌ 飞书通知发送失败: {response.text}")
+            print(f"❌ 飞书通知发送失败: {response.status_code} - {response.text}")
     
     def _send_dingtalk(self, message: str, title: str = None):
         """发送钉钉通知"""

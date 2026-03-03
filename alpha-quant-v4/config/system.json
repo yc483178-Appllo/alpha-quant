@@ -1,0 +1,165 @@
+{
+  "global_config": {
+    "market": ["SH", "SZ"],
+    "timezone": "Asia/Shanghai",
+    "language": "zh-CN",
+    "log_level": "INFO",
+    "version": "4.0.0",
+    "system_name": "Alpha Quant Multi-Agent System"
+  },
+  "agents": {
+    "chief": {
+      "enabled": true,
+      "schedule": {
+        "startup": "08:45",
+        "issue_orders": "09:25",
+        "daily_meeting": "15:30"
+      }
+    },
+    "scout": {
+      "enabled": true,
+      "schedule": {
+        "morning_research": "08:50",
+        "realtime_monitor_interval": 300
+      }
+    },
+    "picker": {
+      "enabled": true,
+      "schedule": {
+        "screening": "09:10"
+      },
+      "strategies": ["momentum", "trend", "value", "reversal", "composite"]
+    },
+    "guard": {
+      "enabled": true,
+      "schedule": {
+        "pre_market_check": "09:20",
+        "realtime_monitor": "*/30"
+      },
+      "limits": {
+        "single_stock_max_pct": 0.20,
+        "total_position_max_pct": 0.80,
+        "daily_loss_limit_pct": 0.02,
+        "stop_loss_pct": 0.08,
+        "take_profit_pct": 0.20,
+        "sector_concentration_limit": 0.40
+      }
+    },
+    "trader": {
+      "enabled": true,
+      "broker": "simulation",
+      "commission_rate": 0.0003,
+      "min_commission": 5
+    },
+    "review": {
+      "enabled": true,
+      "schedule": {
+        "daily_review": "15:10",
+        "weekly_review": "fri_16:00"
+      }
+    }
+  },
+  "data_sources": {
+    "akshare": { "enabled": true, "priority": 1, "timeout": 10 },
+    "tushare": { "enabled": true, "token": "${TUSHARE_TOKEN}", "priority": 2, "timeout": 15 },
+    "baostock": { "enabled": true, "priority": 3, "timeout": 20 }
+  },
+  "notification": {
+    "feishu_webhook": "${FEISHU_WEBHOOK_URL}",
+    "feishu_secret": "${FEISHU_SECRET}",
+    "channels": ["feishu"],
+    "levels": {
+      "info": ["feishu"],
+      "warning": ["feishu"],
+      "critical": ["feishu"]
+    }
+  },
+  "redis": {
+    "url": "${REDIS_URL}",
+    "channels": {
+      "intel": "alpha:intel",
+      "signals": "alpha:signals",
+      "risk": "alpha:risk",
+      "orders": "alpha:orders",
+      "trades": "alpha:trades",
+      "review": "alpha:review",
+      "emergency": "alpha:emergency"
+    }
+  },
+  "strategy": {
+    "adaptive": {
+      "enabled": true,
+      "regimes": ["bull", "bear", "oscillation"]
+    },
+    "multi_timeframe": {
+      "enabled": true,
+      "timeframes": ["daily", "60min", "15min"]
+    },
+    "ml_factor": {
+      "enabled": true,
+      "model_type": "rf",
+      "retrain_interval_days": 7
+    },
+    "sentiment_cycle": {
+      "enabled": true
+    }
+  },
+  "risk": {
+    "circuit_breaker": {
+      "enabled": true,
+      "market_drop_threshold": 0.03
+    },
+    "position": {
+      "max_single_stock": 0.20,
+      "max_total": 0.80,
+      "max_sector": 0.40
+    },
+    "stop_loss": {
+      "individual": 0.08,
+      "trailing": 0.05
+    }
+  },
+  "logging": {
+    "log_dir": "./logs",
+    "rotation": "10 MB",
+    "retention": "30 days",
+    "format": "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}:{function}:{line} | {message}"
+  },
+  "multi_agent": {
+    "enabled": true,
+    "agents": ["Chief", "Scout", "Picker", "Guard", "Trader", "Review"],
+    "communication": "redis_pubsub",
+    "chief_veto_enabled": true,
+    "guard_veto_enabled": true,
+    "conflict_resolution": "chief_decides"
+  },
+  "ml_engine": {
+    "enabled": true,
+    "model_type": "rf",
+    "retrain_interval_days": 7,
+    "feature_importance_threshold": 0.05,
+    "model_save_path": "./models/"
+  },
+  "knowledge_base": {
+    "enabled": true,
+    "db_path": "./data/knowledge_db.json",
+    "auto_learn": true,
+    "min_confidence_to_apply": 0.70
+  },
+  "advanced_strategies": {
+    "adaptive_switching": true,
+    "multi_timeframe": true,
+    "sentiment_cycle": true,
+    "ml_factor_synthesis": true
+  },
+  "nl_trading": {
+    "enabled": true,
+    "require_confirmation": true,
+    "max_single_order_by_nl": 50000
+  },
+  "dashboard": {
+    "enabled": true,
+    "refresh_interval_seconds": 30,
+    "theme": "dark"
+  }
+}

@@ -24,6 +24,7 @@
   },
   "notification": {
     "feishu_webhook": "${FEISHU_WEBHOOK_URL}",
+    "feishu_secret": "${FEISHU_SECRET}",
     "dingtalk_webhook": "${DINGTALK_WEBHOOK_URL}",
     "dingtalk_secret": "${DINGTALK_SECRET}",
     "wechat_pushplus_token": "${PUSHPLUS_TOKEN}",
@@ -67,5 +68,50 @@
     "backup_dir": "./backups",
     "backup_interval_hours": 24,
     "max_backup_count": 30
+  },
+  "drl_portfolio": {
+    "enabled": true,
+    "model_save_path": "./models/drl_portfolio.npz",
+    "max_positions": 30,
+    "initial_cash": 1000000,
+    "transaction_cost": 0.001,
+    "hidden_size": 128,
+    "learning_rate": 0.0003,
+    "training": {
+      "n_episodes": 100,
+      "auto_train": false,
+      "train_schedule": "0 2 * * 0"
+    },
+    "inference": {
+      "min_confidence": 0.6,
+      "max_daily_trades": 5
+    }
+  },
+  "sentiment_analysis": {
+    "enabled": true,
+    "lookback_days": 30,
+    "time_decay_half_life_days": 7,
+    "bullish_threshold": 0.3,
+    "bearish_threshold": -0.3,
+    "source_weights": {
+      "analyst_reports": 0.6,
+      "major_news": 0.3,
+      "social_sentiment": 0.1
+    },
+    "sector_mapping": {
+      "银行": ["601398", "601288", "600036", "000001"],
+      "新能源": ["300750", "601012", "002594", "600438"],
+      "科技": ["002415", "000725", "603501", "002236"],
+      "消费": ["600519", "000858", "603288", "002714"],
+      "医药": ["603259", "000538", "300760", "002007"],
+      "地产": ["001979", "600048", "000002", "600383"]
+    },
+    "data_sources": {
+      "sina_finance": {"enabled": true, "interval_minutes": 30},
+      "eastmoney_guba": {"enabled": true, "interval_minutes": 60},
+      "ths_news": {"enabled": true, "interval_minutes": 60},
+      "weibo_hot": {"enabled": false, "interval_minutes": 120},
+      "xueqiu": {"enabled": false, "interval_minutes": 120}
+    }
   }
 }

@@ -35,6 +35,10 @@ lxml>=4.9.0
 python-dotenv>=1.0.0
 retry>=0.9.2
 
+# === DRL强化学习（V5.0新增） ===
+# 纯NumPy实现，无需额外依赖
+# 如需高级功能可安装: gymnasium>=0.29.0 stable-baselines3>=2.0.0
+
 # === 交易执行（可选） ===
 # xtquant                   # QMT/miniQMT（需从券商获取）
 # PoboAPI                   # PTrade（内置）
