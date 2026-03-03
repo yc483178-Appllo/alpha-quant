@@ -28,6 +28,7 @@ supervisor>=4.2.0
 pandas>=2.0.0
 numpy>=1.24.0
 matplotlib>=3.7.0
+scipy>=1.11.0              # V5.0新增: 组合优化器依赖
 
 # === 网络与工具 ===
 requests>=2.31.0
@@ -38,6 +39,9 @@ retry>=0.9.2
 # === DRL强化学习（V5.0新增） ===
 # 纯NumPy实现，无需额外依赖
 # 如需高级功能可安装: gymnasium>=0.29.0 stable-baselines3>=2.0.0
+
+# === 组合优化（V5.0新增） ===
+# scipy>=1.11.0 已在上文添加
 
 # === 交易执行（可选） ===
 # xtquant                   # QMT/miniQMT（需从券商获取）

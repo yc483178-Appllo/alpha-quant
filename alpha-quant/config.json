@@ -113,5 +113,29 @@
       "weibo_hot": {"enabled": false, "interval_minutes": 120},
       "xueqiu": {"enabled": false, "interval_minutes": 120}
     }
+  },
+  "portfolio_optimizer": {
+    "enabled": true,
+    "method": "black-litterman",
+    "risk_free_rate": 0.03,
+    "constraints": {
+      "single_stock_max_pct": 0.10,
+      "sector_max_pct": 0.30,
+      "min_position_count": 8,
+      "max_position_count": 30,
+      "min_weight": 0.02,
+      "st_forbidden": true,
+      "new_stock_forbidden_days": 5,
+      "t_plus_1": true
+    },
+    "black_litterman": {
+      "uncertainty_scale": 0.1,
+      "confidence_in_views": 0.5
+    },
+    "auto_select": {
+      "enabled": true,
+      "high_volatility_threshold": 0.25,
+      "low_volatility_threshold": 0.15
+    }
   }
 }

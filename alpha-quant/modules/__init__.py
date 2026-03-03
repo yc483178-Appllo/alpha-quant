@@ -17,6 +17,10 @@ from .sentiment_pipeline import (
     SentimentResult, StockSentiment,
     create_sentiment_pipeline, analyze_text_quick
 )
+from .portfolio_optimizer import (
+    PortfolioOptimizer, OptimizationResult,
+    create_portfolio_optimizer, quick_optimize
+)
 
 __all__ = [
     # DRL模块
@@ -46,5 +50,10 @@ __all__ = [
     'SentimentResult',
     'StockSentiment',
     'create_sentiment_pipeline',
-    'analyze_text_quick'
+    'analyze_text_quick',
+    # Portfolio Optimizer模块
+    'PortfolioOptimizer',
+    'OptimizationResult',
+    'create_portfolio_optimizer',
+    'quick_optimize'
 ]
