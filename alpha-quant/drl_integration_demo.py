@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 import numpy as np
 from datetime import datetime
-from modules.drl_portfolio_agent import DRLPortfolioAgent, create_drl_agent
+from core.drl_portfolio_agent import DRLPortfolioAgent, create_drl_agent
 from modules.data_provider import data_provider
 from modules.technical_analysis import technical_analyzer
 from modules.logger import log

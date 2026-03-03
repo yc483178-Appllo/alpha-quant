@@ -14,7 +14,7 @@ from modules.chief_agent import (
     ChiefAgent, create_chief_agent,
     ScoutReport, SentimentReport, PickerList
 )
-from modules.agent_bus import create_agent_bus, create_agent_coordinator
+from core.agent_bus import create_agent_bus, create_agent_coordinator
 
 
 class ChiefIntegrationDemo:

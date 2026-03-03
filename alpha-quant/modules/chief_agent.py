@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from loguru import logger
 
 # 导入DRL Agent
-from modules.drl_portfolio_agent import DRLPortfolioAgent
+from core.drl_portfolio_agent import DRLPortfolioAgent
 
 
 @dataclass
