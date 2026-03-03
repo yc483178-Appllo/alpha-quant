@@ -8,6 +8,7 @@ flask>=3.0.0
 flask-cors>=4.0.0
 flask-compress>=1.14.0
 gunicorn>=21.2.0
+# flask-socketio>=5.3.0    # V5.0 Dashboard V2.0可选: WebSocket实时推送
 
 # === 异步支持 ===
 aiohttp>=3.9.0

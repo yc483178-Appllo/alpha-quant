@@ -137,5 +137,33 @@
       "high_volatility_threshold": 0.25,
       "low_volatility_threshold": 0.15
     }
+  },
+  "dashboard": {
+    "enabled": true,
+    "version": "2.0",
+    "host": "0.0.0.0",
+    "port": 5000,
+    "refresh_interval_seconds": 5,
+    "websocket": {
+      "enabled": false,
+      "ping_interval": 25
+    },
+    "panels": {
+      "overview": {"enabled": true, "position": 1},
+      "portfolio": {"enabled": true, "position": 2},
+      "signals": {"enabled": true, "position": 3},
+      "agents": {"enabled": true, "position": 4},
+      "strategies": {"enabled": true, "position": 5},
+      "portfolio_analysis": {"enabled": true, "position": 6},
+      "sentiment": {"enabled": true, "position": 7},
+      "drl": {"enabled": true, "position": 8},
+      "risk": {"enabled": true, "position": 9}
+    },
+    "trading": {
+      "enabled": true,
+      "require_guard_approval": true,
+      "max_single_order_amount": 100000,
+      "emergency_close_confirm": true
+    }
   }
 }
