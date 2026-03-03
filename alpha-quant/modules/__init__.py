@@ -27,6 +27,10 @@ from .broker_integration import (
     Position, AccountInfo,
     create_broker_manager
 )
+from .oms import (
+    OrderManagementSystem, OrderRecord,
+    create_oms
+)
 
 __all__ = [
     # DRL模块
@@ -73,5 +77,9 @@ __all__ = [
     'OrderType',
     'Position',
     'AccountInfo',
-    'create_broker_manager'
+    'create_broker_manager',
+    # OMS模块
+    'OrderManagementSystem',
+    'OrderRecord',
+    'create_oms'
 ]

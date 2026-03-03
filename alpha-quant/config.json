@@ -183,6 +183,12 @@
         "mini_qmt_path": ""
       }
     ],
+    "oms": {
+      "max_retry_attempts": 3,
+      "retry_delay_seconds": 5,
+      "order_timeout_seconds": 300,
+      "slippage_threshold_bps": 10
+    },
     "order_timeout_seconds": 5,
     "auto_retry": true,
     "max_retry_count": 3
