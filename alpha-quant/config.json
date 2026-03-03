@@ -1,4 +1,6 @@
 {
+  "system_version": "5.0",
+
   "global_config": {
     "market": ["SH", "SZ"],
     "timezone": "Asia/Shanghai",
@@ -71,12 +73,16 @@
   },
   "drl_portfolio": {
     "enabled": true,
+    "algorithm": "PPO",
     "model_save_path": "./models/drl_portfolio.npz",
     "max_positions": 30,
     "initial_cash": 1000000,
     "transaction_cost": 0.001,
     "hidden_size": 128,
     "learning_rate": 0.0003,
+    "gamma": 0.99,
+    "episodes_per_retraining": 100,
+    "retraining_interval_hours": 4,
     "training": {
       "n_episodes": 100,
       "auto_train": false,
@@ -89,15 +95,17 @@
   },
   "sentiment_analysis": {
     "enabled": true,
+    "data_sources": ["sina_finance", "eastmoney", "weibo_aggregator"],
+    "update_frequency_minutes": 60,
     "lookback_days": 30,
     "time_decay_half_life_days": 7,
-    "bullish_threshold": 0.3,
-    "bearish_threshold": -0.3,
     "source_weights": {
       "analyst_reports": 0.6,
       "major_news": 0.3,
       "social_sentiment": 0.1
     },
+    "bullish_threshold": 0.3,
+    "bearish_threshold": -0.3,
     "sector_mapping": {
       "银行": ["601398", "601288", "600036", "000001"],
       "新能源": ["300750", "601012", "002594", "600438"],
@@ -105,13 +113,6 @@
       "消费": ["600519", "000858", "603288", "002714"],
       "医药": ["603259", "000538", "300760", "002007"],
       "地产": ["001979", "600048", "000002", "600383"]
-    },
-    "data_sources": {
-      "sina_finance": {"enabled": true, "interval_minutes": 30},
-      "eastmoney_guba": {"enabled": true, "interval_minutes": 60},
-      "ths_news": {"enabled": true, "interval_minutes": 60},
-      "weibo_hot": {"enabled": false, "interval_minutes": 120},
-      "xueqiu": {"enabled": false, "interval_minutes": 120}
     }
   },
   "portfolio_optimizer": {
@@ -138,32 +139,22 @@
       "low_volatility_threshold": 0.15
     }
   },
-  "dashboard": {
+  "dashboard_v2": {
     "enabled": true,
     "version": "2.0",
     "host": "0.0.0.0",
     "port": 5000,
-    "refresh_interval_seconds": 5,
+    "refresh_interval_ms": 5000,
     "websocket": {
       "enabled": false,
       "ping_interval": 25
     },
-    "panels": {
-      "overview": {"enabled": true, "position": 1},
-      "portfolio": {"enabled": true, "position": 2},
-      "signals": {"enabled": true, "position": 3},
-      "agents": {"enabled": true, "position": 4},
-      "strategies": {"enabled": true, "position": 5},
-      "portfolio_analysis": {"enabled": true, "position": 6},
-      "sentiment": {"enabled": true, "position": 7},
-      "drl": {"enabled": true, "position": 8},
-      "risk": {"enabled": true, "position": 9}
-    },
-    "trading": {
+    "panels": ["overview","positions","signals","agents","strategy",
+               "portfolio","sentiment","drl","risk"],
+    "trading_operations": {
       "enabled": true,
       "require_guard_approval": true,
-      "max_single_order_amount": 100000,
-      "emergency_close_confirm": true
+      "max_quick_trade_amount": 100000
     }
   },
   "broker_integration": {
@@ -173,17 +164,18 @@
     "account_configs": [
       {
         "broker": "ptrade",
-        "account_id": "",
+        "account_id": "${PTRADE_ACCOUNT_ID}",
         "api_url": "http://localhost:8888",
         "token": ""
       },
       {
         "broker": "qmt",
-        "account_id": "",
-        "mini_qmt_path": ""
+        "account_id": "${QMT_ACCOUNT_ID}",
+        "mini_qmt_path": "${QMT_PATH}"
       }
     ],
     "oms": {
+      "enable_retry": true,
       "max_retry_attempts": 3,
       "retry_delay_seconds": 5,
       "order_timeout_seconds": 300,
@@ -197,6 +189,7 @@
     "enabled": true,
     "online_learning": {
       "enabled": true,
+      "retraining_frequency": "daily",
       "lookback_days": 7,
       "exponential_avg_weight": 0.2,
       "rollback_threshold_accuracy_drop": 0.05
@@ -213,8 +206,8 @@
       "correlation_distance_threshold": 2.0,
       "volatility_threshold_std": 2.0,
       "actions": {
-        "red_alert": {"reduce_position": 0.5, "notify": true},
-        "yellow_alert": {"reduce_position": 0.2, "notify": true}
+        "yellow_alert": {"position_reduction_pct": 0.1},
+        "red_alert": {"position_reduction_pct": 0.5, "trading_pause": true}
       }
     },
     "schedule": {
