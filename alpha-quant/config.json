@@ -165,5 +165,26 @@
       "max_single_order_amount": 100000,
       "emergency_close_confirm": true
     }
+  },
+  "broker_integration": {
+    "enabled": true,
+    "primary_broker": "ptrade",
+    "fallback_brokers": ["qmt"],
+    "account_configs": [
+      {
+        "broker": "ptrade",
+        "account_id": "",
+        "api_url": "http://localhost:8888",
+        "token": ""
+      },
+      {
+        "broker": "qmt",
+        "account_id": "",
+        "mini_qmt_path": ""
+      }
+    ],
+    "order_timeout_seconds": 5,
+    "auto_retry": true,
+    "max_retry_count": 3
   }
 }

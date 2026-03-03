@@ -21,6 +21,12 @@ from .portfolio_optimizer import (
     PortfolioOptimizer, OptimizationResult,
     create_portfolio_optimizer, quick_optimize
 )
+from .broker_integration import (
+    BrokerInterface, PTradeBroker, QMTBroker, BrokerManager,
+    Order, OrderStatus, OrderSide, OrderType,
+    Position, AccountInfo,
+    create_broker_manager
+)
 
 __all__ = [
     # DRL模块
@@ -55,5 +61,17 @@ __all__ = [
     'PortfolioOptimizer',
     'OptimizationResult',
     'create_portfolio_optimizer',
-    'quick_optimize'
+    'quick_optimize',
+    # Broker Integration模块
+    'BrokerInterface',
+    'PTradeBroker',
+    'QMTBroker',
+    'BrokerManager',
+    'Order',
+    'OrderStatus',
+    'OrderSide',
+    'OrderType',
+    'Position',
+    'AccountInfo',
+    'create_broker_manager'
 ]
