@@ -31,6 +31,14 @@ from .oms import (
     OrderManagementSystem, OrderRecord,
     create_oms
 )
+from .continuous_learning import (
+    OnlineLearningPipeline,
+    ABTestingFramework,
+    AnomalyDetector,
+    PerformanceAttributionEngine,
+    ContinuousLearningSystem,
+    create_continuous_learning_system
+)
 
 __all__ = [
     # DRL模块
@@ -81,5 +89,12 @@ __all__ = [
     # OMS模块
     'OrderManagementSystem',
     'OrderRecord',
-    'create_oms'
+    'create_oms',
+    # 持续学习模块
+    'OnlineLearningPipeline',
+    'ABTestingFramework',
+    'AnomalyDetector',
+    'PerformanceAttributionEngine',
+    'ContinuousLearningSystem',
+    'create_continuous_learning_system'
 ]

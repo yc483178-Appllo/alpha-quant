@@ -192,5 +192,34 @@
     "order_timeout_seconds": 5,
     "auto_retry": true,
     "max_retry_count": 3
+  },
+  "continuous_learning": {
+    "enabled": true,
+    "online_learning": {
+      "enabled": true,
+      "lookback_days": 7,
+      "exponential_avg_weight": 0.2,
+      "rollback_threshold_accuracy_drop": 0.05
+    },
+    "ab_testing": {
+      "enabled": true,
+      "incumbent_allocation": 0.7,
+      "challenger_allocation": 0.3,
+      "promotion_threshold_pvalue": 0.05
+    },
+    "anomaly_detection": {
+      "enabled": true,
+      "baseline_window_days": 30,
+      "correlation_distance_threshold": 2.0,
+      "volatility_threshold_std": 2.0,
+      "actions": {
+        "red_alert": {"reduce_position": 0.5, "notify": true},
+        "yellow_alert": {"reduce_position": 0.2, "notify": true}
+      }
+    },
+    "schedule": {
+      "daily_learning_time": "15:30",
+      "weekly_full_retrain": "Sunday 02:00"
+    }
   }
 }
