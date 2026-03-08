@@ -1,0 +1,701 @@
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,10 30,24 16,32 2,24 2,10" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+      <polyline points="8,16 12,12 16,15 20,10 24,16" fill="none" stroke="#00c8ff" stroke-width="1.8"/>
+      <circle cx="16" cy="16" r="3" fill="#00c8ff" opacity=".4"/>
+      <line x1="16" y1="2" x2="16" y2="8" stroke="#00e676" stroke-width="1.5"/>
+    </svg>
+    <span class="logo-text">ALPHA-GENESIS<span class="logo-ver">V3.0</span></span>
+  </div>
+  <div class="tb-badge"><span class="tb-lbl">政权</span><span class="tb-val amber" id="tb-regime">震荡</span></div>
+  <div class="tb-badge"><span class="tb-lbl">DRL</span><span class="tb-val cyan" id="tb-drl">72%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">进化</span><span class="tb-val cyan" id="tb-gen">G42</span></div>
+  <div class="tb-badge"><span class="sdot on"></span><span class="tb-lbl">券商</span><span class="tb-val up" id="tb-broker">华泰</span></div>
+  <div class="tb-badge"><span class="tb-lbl">持仓</span><span class="tb-val" id="tb-pos">12</span></div>
+  <div class="tb-badge"><span class="tb-lbl">P&L</span><span class="tb-val up" id="tb-pnl">+2.34%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">信号</span><span class="tb-val cyan" id="tb-sig">7</span></div>
+  <div class="tb-badge"><span class="tb-lbl">沪指</span><span class="tb-val up" id="tb-sh">3,284</span></div>
+  <span id="clock">--:--:--</span>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview"><i class="fa-solid fa-chart-line"></i>总览</button>
+    <button class="tab-btn" data-tab="positions"><i class="fa-solid fa-briefcase"></i>持仓</button>
+    <button class="tab-btn" data-tab="signals"><i class="fa-solid fa-satellite-dish"></i>信号</button>
+    <button class="tab-btn" data-tab="agents"><i class="fa-solid fa-robot"></i>智能体</button>
+    <button class="tab-btn" data-tab="strategy"><i class="fa-solid fa-brain"></i>策略库<span class="tab-badge">50+</span></button>
+    <button class="tab-btn" data-tab="portfolio"><i class="fa-solid fa-chart-pie"></i>组合构建</button>
+    <button class="tab-btn" data-tab="sentiment"><i class="fa-solid fa-newspaper"></i>舆情</button>
+    <button class="tab-btn" data-tab="drl"><i class="fa-solid fa-microchip"></i>DRL</button>
+    <button class="tab-btn" data-tab="risk"><i class="fa-solid fa-shield-halved"></i>风险</button>
+    <button class="tab-btn" data-tab="evolution"><i class="fa-solid fa-dna"></i>进化<span class="tab-badge up">G42</span></button>
+    <button class="tab-btn" data-tab="research"><i class="fa-solid fa-file-lines"></i>投研报告</button>
+    <button class="tab-btn" data-tab="broker"><i class="fa-solid fa-building-columns"></i>券商管理</button>
+    <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i>历史数据</button>
+    <button class="tab-btn" data-tab="live"><i class="fa-solid fa-bolt"></i>实盘操作<span class="tab-badge" style="background:var(--red)">LIVE</span></button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <!-- Panel 1: Overview -->
+  <div class="panel active" id="panel-overview">
+    <div class="g4" id="spark-row">
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">上证综指</span><span class="card-badge cb-green" id="sh-chg">+0.82%</span></div>
+        <div class="spark-val up" id="sh-val">3,284.5</div>
+        <div class="spark-canvas"><canvas id="c-sh"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">深证成指</span><span class="card-badge cb-red" id="sz-chg">-0.31%</span></div>
+        <div class="spark-val down" id="sz-val">10,521</div>
+        <div class="spark-canvas"><canvas id="c-sz"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">创业板指</span><span class="card-badge cb-green" id="cy-chg">+1.24%</span></div>
+        <div class="spark-val up" id="cy-val">2,134</div>
+        <div class="spark-canvas"><canvas id="c-cy"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('portfolio')">
+        <div class="spark-top"><span class="spark-name">组合净值</span><span class="card-badge cb-cyan" id="pf-chg">+2.34%</span></div>
+        <div class="spark-val cyan" id="pf-val">108.4</div>
+        <div class="spark-canvas"><canvas id="c-pf"></canvas></div>
+      </div>
+    </div>
+    
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>60日净值对比（组合 / CSI300 / CSI500）</div></div>
+        <div class="ch ch-xl"><canvas id="c-equity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>今日分钟P&L走势（09:30→15:00）</div></div>
+        <div class="ch ch-xl"><canvas id="c-intraday"></canvas></div>
+      </div>
+    </div>
+    
+    <div class="g3">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>A股行业热力图（今日涨跌）</div></div>
+        <div class="heat-grid" id="heat-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-signal"></i>实时信号跑马灯</div><span class="card-badge cb-cyan" id="sig-count-badge">7条</span></div>
+        <div class="ticker-wrap" id="sig-ticker">加载中...</div>
+        <hr class="sep">
+        <div class="card-hdr" style="margin-top:8px"><div class="card-title"><i class="fa-solid fa-gauge-high"></i>系统快照</div></div>
+        <div class="kpi-grid" id="sys-snap"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>行业配置权重</div></div>
+        <div class="ch ch-md"><canvas id="c-sector-donut"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Positions -->
+  <div class="panel" id="panel-positions">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>当前持仓（12只）</div><span class="card-badge cb-cyan">A股 T+1</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓数</th><th>市值</th><th>盈亏额</th><th>盈亏率</th></tr></thead>
+            <tbody id="pos-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>持仓行业分布</div></div>
+          <div class="ch ch-md"><canvas id="c-pos-sector"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>个股盈亏贡献</div></div>
+          <div class="ch ch-md"><canvas id="c-stock-pnl"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Signals -->
+  <div class="panel" id="panel-signals">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-satellite-dish"></i>实时信号队列</div><span class="card-badge cb-amber" id="sig-pending">7条待处理</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>时间</th><th>代码/名称</th><th>方向</th><th>价格</th><th>来源</th><th>类型</th><th>置信</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="sig-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>信号类型分布</div></div><div class="ch ch-md"><canvas id="c-sig-pie"></canvas></div></div>
+        <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>置信度分布</div></div><div class="ch ch-md"><canvas id="c-sig-conf"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 4: Agents -->
+  <div class="panel" id="panel-agents">
+    <div class="ag-grid" id="ag-grid"></div>
+    <div class="g2" style="margin-top:10px">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-timeline"></i>Agent通信时间线</div></div>
+        <div id="ag-timeline" style="max-height:240px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>Agent任务负载</div></div>
+        <div class="ch ch-md"><canvas id="c-ag-load"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// State
+const S = {
+  curBroker: 'ptrade', curModel: 'transformer', regime: '震荡市', drlConf: 72, genNum: 42, pnl: 2.34,
+  chartsInit: {}, manualPicks: [],
+  brokerHistory: [
+    {t:'09:30', from:'QMT', to:'华泰PTrade', reason:'手动指令'},
+    {t:'08:45', from:'通用', to:'迅投QMT', reason:'自动：质量恢复'},
+  ],
+  priceData: {
+    sh: [3246,3254,3261,3265,3270,3278,3280,3278,3282,3284],
+    sz: [10700,10720,10735,10748,10760,10773,10780,10785,10810,10821],
+    cy: [2112,2118,2124,2128,2133,2136,2139,2134,2135,2134],
+    pf: [105.2,105.6,106.1,106.4,106.8,107.2,107.5,107.8,108.2,108.4]
+  },
+  positions: [
+    {c:'600519', n:'贵州茅台', cost:1890.5, price:1924.3, qty:50, sector:'白酒'},
+    {c:'000858', n:'五粮液', cost:142.3, price:145.7, qty:200, sector:'白酒'},
+    {c:'601318', n:'中国平安', cost:17.80, price:18.34, qty:5000, sector:'保险'},
+    {c:'300750', n:'宁德时代', cost:287.4, price:294.1, qty:300, sector:'新能源'},
+    {c:'600036', n:'招商银行', cost:29.45, price:30.12, qty:10000, sector:'银行'},
+    {c:'002415', n:'海康威视', cost:34.50, price:35.67, qty:2000, sector:'安防'},
+    {c:'600900', n:'长江电力', cost:21.34, price:21.89, qty:5000, sector:'电力'},
+    {c:'688981', n:'中芯国际', cost:45.67, price:47.23, qty:1000, sector:'芯片'},
+    {c:'601166', n:'兴业银行', cost:24.12, price:24.78, qty:3000, sector:'银行'},
+    {c:'000333', n:'美的集团', cost:52.45, price:53.89, qty:1000, sector:'家电'},
+    {c:'600276', n:'恒瑞医药', cost:98.34, price:101.45, qty:500, sector:'医药'},
+    {c:'601888', n:'中国中免', cost:156.78, price:162.34, qty:200, sector:'消费'}
+  ],
+  signals: [
+    {t:'09:45', c:'600519', n:'贵州茅台', dir:'BUY', price:1924.30, conf:92, src:'DRL+Evolution', type:'drl', status:'pending'},
+    {t:'10:12', c:'000858', n:'五粮液', dir:'ADD', price:145.67, conf:87, src:'Sentiment', type:'event', status:'pending'},
+    {t:'10:58', c:'300750', n:'宁德时代', dir:'SELL', price:294.12, conf:78, src:'Strategy:X7F2', type:'momentum', status:'pending'},
+    {t:'11:34', c:'600036', n:'招商银行', dir:'TAKE', price:30.12, conf:85, src:'Guard', type:'risk', status:'confirmed'},
+    {t:'13:22', c:'601318', n:'中国平安', dir:'BUY', price:18.34, conf:81, src:'Fundamental+JQ', type:'fundamental', status:'pending'},
+    {t:'14:15', c:'688981', n:'中芯国际', dir:'ADD', price:47.23, conf:79, src:'Picker', type:'momentum', status:'pending'},
+    {t:'14:56', c:'600900', n:'长江电力', dir:'REDUCE', price:21.89, conf:83, src:'DRL', type:'drl', status:'pending'}
+  ],
+  agents: [
+    {name:'Chief Agent', role:'决策协调', icon:'fa-crown', st:'thinking', tasks:7, health:99, msg:'综合7条信号，正在生成今日最终操作指令...'},
+    {name:'Scout Agent', role:'市场扫描', icon:'fa-telescope', st:'on', tasks:23, health:98, msg:'晨报完成，识别3条事件驱动信号，A股主板活跃'},
+    {name:'Picker Agent', role:'标的筛选', icon:'fa-bullseye', st:'on', tasks:19, health:95, msg:'5策略筛选完成，候选标的8只，已发送Chief'},
+    {name:'Guard Agent', role:'风控审批', icon:'fa-shield-halved', st:'on', tasks:5, health:100, msg:'VaR=1.84%，风险可控，今日操作计划已批准'},
+    {name:'Trader Agent', role:'订单执行', icon:'fa-bolt', st:'on', tasks:3, health:97, msg:'已执行3笔，成交率100%，T+1限制已检查'},
+    {name:'Review Agent', role:'绩效复盘', icon:'fa-chart-bar', st:'off', tasks:0, health:100, msg:'等待收盘后运行绩效归因分析'},
+    {name:'DRL Expert', role:'深度学习', icon:'fa-microchip', st:'on', tasks:12, health:94, msg:'Transformer-PPO推理完成，置信72%，政权:震荡'},
+    {name:'Sentiment', role:'舆情分析', icon:'fa-newspaper', st:'thinking', tasks:8, health:93, msg:'识别5个A股事件，宁德时代超预期季报+0.89'}
+  ],
+  brokers: [
+    {id:'ptrade', name:'华泰PTrade', st:'on', lat:2, sr:98.2, sl:1.2, cm:0.025, sc:87, acc:'HT_8888xxxx'},
+    {id:'qmt', name:'迅投QMT', st:'on', lat:5, sr:95.8, sl:1.8, cm:0.028, sc:76, acc:'XD_2024xxxx'},
+    {id:'easy', name:'通用Easytrader', st:'off', lat:9999, sr:0, sl:0, cm:0.05, sc:0, acc:'未连接'}
+  ],
+  execLog: [
+    {t:'14:32', c:'600519', dir:'买入', price:1924.30, qty:50, amt:96215, st:'成交'},
+    {t:'14:15', c:'300750', dir:'卖出', price:294.12, qty:100, amt:29412, st:'成交'},
+    {t:'13:45', c:'601318', dir:'买入', price:18.34, qty:1000, amt:18340, st:'部分成交'}
+  ]
+};
+
+// Strategy Library
+const STRAT_TYPES = ['momentum','mean_rev','ml','event','drl'];
+const STRAT_NAMES = {
+  momentum: ['MA双均线','动量反转','价格突破','量价共振','趋势跟踪'],
+  mean_rev: ['布林带回归','RSI超卖','统计套利','配对交易','均值漂移'],
+  ml: ['XGBoost集成','LSTM预测','随机森林','LightGBM','Transformer'],
+  event: ['财报超预期','政策红利','并购套利','指数调仓','大宗交易'],
+  drl: ['PPO-V5','PPO-V6','Transformer-PPO','A3C政权','DDPG执行']
+};
+const ALL_STOCKS = ['600519贵州茅台','000858五粮液','300750宁德时代','688981中芯国际','600036招商银行','601318中国平安','002415海康威视','600900长江电力','000333美的集团','600276恒瑞医药','601888中国中免','601166兴业银行'];
+
+function genStratLib() {
+  const lib = [];
+  let idx = 1;
+  for (const tp of STRAT_TYPES) {
+    const names = STRAT_NAMES[tp];
+    for (let v = 0; v < 10; v++) {
+      const gen = 20 + Math.floor(Math.random() * 23);
+      const fit = parseFloat((4 + Math.random() * 5.5).toFixed(2));
+      const ret = parseFloat((6 + Math.random() * 16).toFixed(2));
+      const sharpe = parseFloat((0.8 + Math.random() * 1.8).toFixed(2));
+      const dd = parseFloat((3 + Math.random() * 9).toFixed(2));
+      const wr = parseFloat((48 + Math.random() * 28).toFixed(1));
+      const trades = 80 + Math.floor(Math.random() * 300);
+      const status = fit > 8 ? 'active' : fit > 6 ? 'standby' : 'retired';
+      const nm = names[v % names.length];
+      const matchedStocks = ALL_STOCKS.sort(() => Math.random() - .5).slice(0, 3).map(s => s.slice(0, 6));
+      lib.push({
+        id: `${tp.substring(0,3).toUpperCase()}-${String(idx).padStart(3,'0')}`,
+        type: tp, name: nm + (v > 0 ? `-v${v+1}` : ''), gen, fit, ret, sharpe, dd, wr, trades, status,
+        matchedStocks, params: { lookback: 10 + v * 5, threshold: 0.01 + v * 0.005, regime_filter: v % 2 === 0 },
+        created: `2025-${String(Math.ceil(Math.random() * 12)).padStart(2,'0')}-${String(10 + Math.floor(Math.random() * 18)).padStart(2,'0')}`
+      });
+      idx++;
+    }
+  }
+  return lib.sort((a, b) => b.fit - a.fit);
+}
+const STRAT_LIB = genStratLib();
+let STRAT_FILTER = 'all';
+
+// Trade History
+function genTradeHistory() {
+  const codes = ['600036','000858','600519','601318','300750','002415','600900','688981'];
+  const names = ['招商银行','五粮液','贵州茅台','中国平安','宁德时代','海康威视','长江电力','中芯国际'];
+  const strats = ['MA双均线','动量反转','XGBoost集成','财报超预期','Transformer-PPO'];
+  const regimes = ['上升市','下降市','震荡市'];
+  const dirs = ['买入','卖出'];
+  const r = [];
+  for (let i = 0; i < 180; i++) {
+    const idx = i % codes.length;
+    const d = new Date(Date.now() - i * 86400000);
+    r.push({
+      time: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+      code: codes[idx], name: names[idx],
+      dir: dirs[Math.floor(Math.random() * 2)],
+      price: parseFloat((80 + Math.random() * 200).toFixed(2)),
+      qty: 100 * Math.ceil(Math.random() * 10),
+      strategy: strats[Math.floor(Math.random() * strats.length)],
+      regime: regimes[Math.floor(Math.random() * 3)],
+      pnl: parseFloat(((Math.random() - .4) * 8).toFixed(2))
+    });
+  }
+  return r;
+}
+const TRADES = genTradeHistory();
+
+// Risk Drill Data
+const RISK_DRILL = {
+  '市场风险': { pct: 45, color: '#ff3d57', desc: '来自宏观市场系统性风险，主要为β敞口' },
+  '流动性风险': { pct: 25, color: '#ffb300', desc: '市场流动性不足，大额订单冲击成本' },
+  '模型风险': { pct: 20, color: '#00c8ff', desc: '模型过拟合/泛化不足导致的预测误差' },
+  '执行风险': { pct: 10, color: '#00e676', desc: '滑点、延迟、系统故障等执行层面风险' }
+};
+
+// Tab Switching
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if (btn) btn.classList.add('active');
+  }
+  if (!S.chartsInit[name]) { S.chartsInit[name] = true; initPanelCharts(name); }
+}
+document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'), btn)));
+
+// Clock
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' CST';
+}
+
+// Modal Helpers
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showDrill(title, html) {
+  document.getElementById('drill-title').textContent = title;
+  document.getElementById('drill-body').innerHTML = html;
+  openModal('modal-drill');
+}
+
+// Render Functions
+function renderPositions() {
+  const tb = document.getElementById('pos-tbody');
+  if (!tb) return;
+  tb.innerHTML = S.positions.map(p => {
+    const pnl = (p.price - p.cost) * p.qty;
+    const rate = ((p.price - p.cost) / p.cost * 100).toFixed(2);
+    return `<tr onclick="showDrill('${p.n}(${p.c})持仓详情', posDetail('${p.c}'))">
+      <td class="cyan">${p.c}</td><td>${p.n}</td>
+      <td>${p.cost.toFixed(2)}</td><td>${p.price.toFixed(2)}</td>
+      <td>${p.qty.toLocaleString()}</td>
+      <td>¥${(p.price * p.qty).toLocaleString()}</td>
+      <td class="${pnl >= 0 ? 'up' : 'down'}">¥${pnl.toFixed(0)}</td>
+      <td class="${rate >= 0 ? 'up' : 'down'}">${rate >= 0 ? '+' : ''}${rate}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function posDetail(code) {
+  const p = S.positions.find(x => x.c === code) || {};
+  const rate = p ? ((p.price - p.cost) / p.cost * 100).toFixed(2) : 0;
+  return `<div class="m-section"><h4>持仓概况</h4>
+    <table class="tbl"><tbody>
+      <tr><td>持仓成本</td><td class="cyan">¥${p.cost?.toFixed(2)}</td></tr>
+      <tr><td>现价</td><td class="${rate >= 0 ? 'up' : 'down'}">¥${p.price?.toFixed(2)}</td></tr>
+      <tr><td>持仓量</td><td>${p.qty?.toLocaleString()}股</td></tr>
+      <tr><td>市值</td><td>¥${(p.price * p.qty)?.toLocaleString()}</td></tr>
+      <tr><td>浮盈亏</td><td class="${rate >= 0 ? 'up' : 'down'}">${rate >= 0 ? '+' : ''}${rate}% / ¥${((p.price - p.cost) * p.qty)?.toFixed(0)}</td></tr>
+      <tr><td>行业</td><td>${p.sector}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="m-section"><h4>AI操作建议</h4>
+    <p style="font-size:12px;color:var(--text2);line-height:1.8">
+      当前政权「震荡市」下，DRL推荐持有该股票。<br>
+      近期支撑位: <span class="up">¥${(p.cost * 0.97)?.toFixed(2)}</span> &nbsp;
+      压力位: <span style="color:var(--amber)">¥${(p.price * 1.08)?.toFixed(2)}</span><br>
+      技术面: MA5/MA10金叉，MACD红柱扩大，短期偏多
+    </p>
+  </div>`;
+}
+
+function renderSignals() {
+  const tb = document.getElementById('sig-tbody');
+  if (!tb) return;
+  const typeMap = { drl: 'cb-cyan', event: 'cb-green', momentum: 'cb-amber', risk: 'cb-purple', fundamental: 'cb-cyan' };
+  const dirMap = { BUY: '买入', SELL: '卖出', ADD: '加仓', REDUCE: '减仓', TAKE: '止盈' };
+  const dirCol = { BUY: 'up', SELL: 'down', ADD: 'up', REDUCE: 'down', TAKE: 'neutral' };
+  tb.innerHTML = S.signals.map(s => `
+    <tr onclick="showDrill('${s.n}信号详情', sigDetail(${JSON.stringify(s).replace(/"/g, '&quot;')}))">
+      <td class="neutral">${s.t}</td>
+      <td><span class="cyan">${s.c}</span><br><span style="font-size:10px;color:var(--text3)">${s.n}</span></td>
+      <td><span class="${dirCol[s.dir] || ''}" style="font-weight:600">${dirMap[s.dir] || s.dir}</span></td>
+      <td>¥${s.price.toFixed(2)}</td>
+      <td style="font-size:10px;color:var(--text3)">${s.src}</td>
+      <td><span class="tag tag-${s.type === 'drl' ? 'drl' : s.type === 'event' ? 'ev' : 'mom'}">${s.type}</span></td>
+      <td><div class="pbar" style="width:60px"><div class="pfill" style="width:${s.conf}%;background:${s.conf > 85 ? 'var(--green)' : 'var(--amber)'}"></div></div>${s.conf}%</td>
+      <td><span class="${s.status === 'confirmed' ? 'up' : 'neutral'}">${s.status === 'confirmed' ? '✓已确认' : '⏳待处理'}</span></td>
+      <td><button class="btn btn-primary btn-xs" onclick="event.stopPropagation();execSignal('${s.c}','${s.dir}')">执行</button></td>
+    </tr>`).join('');
+  const cnt = S.signals.filter(x => x.status === 'pending').length;
+  const pendEl = document.getElementById('sig-pending');
+  if (pendEl) pendEl.textContent = cnt + '条待处理';
+  const sEl = document.getElementById('tb-sig');
+  if (sEl) sEl.textContent = S.signals.length;
+}
+
+function sigDetail(s) {
+  return `<div class="m-section"><h4>信号详情</h4>
+    <table class="tbl"><tbody>
+      <tr><td>股票</td><td class="cyan">${s.c} ${s.n}</td></tr>
+      <tr><td>方向</td><td class="${s.dir === 'BUY' || s.dir === 'ADD' ? 'up' : 'down'}">${s.dir}</td></tr>
+      <tr><td>价格</td><td>¥${s.price.toFixed(2)}</td></tr>
+      <tr><td>置信度</td><td class="${s.conf > 85 ? 'up' : 'neutral'}">${s.conf}%</td></tr>
+      <tr><td>来源</td><td>${s.src}</td></tr>
+      <tr><td>状态</td><td>${s.status}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="m-section"><h4>因果推理链</h4>
+    <p style="font-size:12px;color:var(--text2);line-height:1.8">
+    ${s.type === 'event' ? '业绩超预期 → 机构上调评级 → 资金流入 → 股价上行（预估持续1周）' :
+      s.type === 'drl' ? 'Transformer注意力机制识别到价格形态 → 政权适应权重 → 组合优化推荐' :
+      s.type === 'momentum' ? '动量因子激活 → 量价共振 → 策略X7F2触发买点 → 历史胜率64%' :
+      '多因子综合评分触发信号，基本面分析支持'}
+    </p>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:14px">
+    <button class="btn btn-primary" onclick="execSignal('${s.c}','${s.dir}')">确认执行</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-drill')">暂不执行</button>
+  </div>`;
+}
+
+function execSignal(code, dir) {
+  closeModal('modal-drill');
+  const pos = S.positions.find(p => p.c === code);
+  const name = pos ? pos.n : code;
+  addAIMsg(`指令已发送：${dir} ${name}(${code})，等待Guard审批...`, 'sys-action');
+  showNotif(`✓ 信号 ${code} ${dir} 已发送执行队列`);
+}
+
+function renderAgents() {
+  const el = document.getElementById('ag-grid');
+  if (!el) return;
+  el.innerHTML = S.agents.map(a => `
+    <div class="ag-card ${a.st === 'on' ? 'active' : a.st === 'thinking' ? 'thinking' : ''}" data-agent="${a.name}">
+      <div class="ag-header">
+        <div class="ag-icon" style="background:${a.st === 'on' ? 'rgba(0,230,118,.1)' : a.st === 'thinking' ? 'rgba(255,179,0,.1)' : 'rgba(129,129,129,.1)' }">
+          <i class="fa-solid ${a.icon}" style="color:${a.st === 'on' ? 'var(--green)' : a.st === 'thinking' ? 'var(--amber)' : 'var(--text3)'}"></i>
+        </div>
+        <div style="flex:1"><div class="ag-name">${a.name}</div><div class="ag-role">${a.role}</div></div>
+        <span class="sdot ${a.st}"></span>
+      </div>
+      <div class="ag-msg">${a.msg}</div>
+      <div class="ag-metrics">
+        <div class="ag-m"><div class="v">${a.tasks}</div><div class="l">任务</div></div>
+        <div class="ag-m"><div class="v">${a.health}%</div><div class="l">健康</div></div>
+        <div class="ag-m"><div class="v" style="color:${a.st === 'on' ? 'var(--green)' : a.st === 'thinking' ? 'var(--amber)' : 'var(--text3)'}">${a.st === 'on' ? '在线' : a.st === 'thinking' ? '推理中' : '待机'}</div><div class="l">状态</div></div>
+      </div>
+    </div>`).join('');
+  const tl = document.getElementById('ag-timeline');
+  if (!tl) return;
+  const tlData = [
+    {t:'14:32', a:'Chief Agent', m:'综合7条信号，发出3条执行指令'},
+    {t:'14:28', a:'Sentiment', m:'宁德时代季报超预期事件，BUY信号+0.89'},
+    {t:'14:15', a:'DRL Expert', m:'Transformer推理完成，推荐权重调整'},
+    {t:'14:08', a:'Guard Agent', m:'VaR检查通过，批准今日操作计划'},
+    {t:'13:45', a:'Picker Agent', m:'5策略筛选完成，候选标的8只'},
+    {t:'13:22', a:'Scout Agent', m:'晨报完成：震荡市，关注新能源板块'},
+    {t:'13:10', a:'Evolution', m:'第42代进化完成，最优适应度9.24'},
+    {t:'09:30', a:'Trader Agent', m:'开盘就绪，T+1规则检查完成'}
+  ];
+  tl.innerHTML = tlData.map(e => `
+    <div class="tl-item">
+      <span class="tl-time">${e.t}</span>
+      <span class="tl-agent">${e.a.split(' ')[0]}</span>
+      <span class="tl-msg">${e.m}</span>
+    </div>`).join('');
+}
+
+function renderHeatGrid() {
+  const el = document.getElementById('heat-grid');
+  if (!el) return;
+  const sectors = [
+    {name:'银行', perf:2.34}, {name:'白酒', perf:4.56}, {name:'医药', perf:-1.23},
+    {name:'新能源', perf:-2.45}, {name:'芯片', perf:3.67}, {name:'电力', perf:1.23},
+    {name:'家电', perf:-0.45}, {name:'地产', perf:-3.45}, {name:'消费', perf:2.15},
+    {name:'安防', perf:1.56}
+  ];
+  el.innerHTML = sectors.map(s => {
+    const p = s.perf;
+    const alpha = Math.min(0.9, Math.abs(p) / 5 * 0.8 + 0.2);
+    const bg = p > 0 ? `rgba(0,230,118,${alpha})` : `rgba(255,61,87,${alpha})`;
+    const fg = Math.abs(p) > 2 ? '#fff' : 'rgba(255,255,255,.9)';
+    return `<div class="heat-cell" style="background:${bg};color:${fg}" onclick="showSectorDrill('${s.name}',${p})">
+      <div class="hc-name">${s.name}</div>
+      <div class="hc-val">${p > 0 ? '+' : ''}${p}%</div>
+    </div>`;
+  }).join('');
+}
+
+function showSectorDrill(name, perf) {
+  showDrill(`${name}行业今日行情`, `
+    <div class="m-section"><h4>板块表现</h4>
+      <div style="font-size:32px;font-weight:700;${perf >= 0 ? 'color:var(--green)' : 'color:var(--red)'};margin-bottom:14px">
+        ${perf >= 0 ? '+' : ''}${perf}%
+      </div>
+      <table class="tbl"><tbody>
+        <tr><td>今日涨跌</td><td class="${perf >= 0 ? 'up' : 'down'}">${perf >= 0 ? '+' : ''}${perf}%</td></tr>
+        <tr><td>成交量较昨日</td><td class="up">+15.3%</td></tr>
+        <tr><td>行业PE(TTM)</td><td>12.4x</td></tr>
+        <tr><td>北向资金</td><td class="${perf >= 0 ? 'up' : 'down'}">${perf >= 0 ? '+' : '-'}${Math.abs(perf * 3.2).toFixed(1)}亿</td></tr>
+      </tbody></table>
+    </div>
+    <div class="m-section"><h4>本组合持仓该行业</h4>
+      <div id="sector-holds"></div>
+    </div>`);
+  const items = S.positions.filter(p => 
+    (name === '白酒' && ['000858','600519'].includes(p.c)) ||
+    (name === '银行' && ['600036','601166'].includes(p.c)) ||
+    (name === '新能源' && ['300750'].includes(p.c)) ||
+    (name === '芯片' && ['688981'].includes(p.c)) ||
+    p.sector === name
+  );
+  const el = document.getElementById('sector-holds');
+  if (el) el.innerHTML = items.length ? items.map(p => `
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span>${p.c} ${p.n}</span>
+      <span class="${((p.price - p.cost) / p.cost) >= 0 ? 'up' : 'down'}">${((p.price - p.cost) / p.cost * 100).toFixed(2)}%</span>
+    </div>`).join('') : '<div style="color:var(--text3);font-size:12px">本组合暂无该行业持仓</div>';
+}
+
+function renderSysSnap() {
+  const el = document.getElementById('sys-snap');
+  if (!el) return;
+  el.innerHTML = [
+    {l:'VaR(95%)', v:'1.84%', cls:'up'}, {l:'夏普比', v:'1.58', cls:'up'},
+    {l:'最大回撤', v:'-8.4%', cls:'down'}, {l:'Alpha(月)', v:'+2.34%', cls:'up'}
+  ].map(m => `<div class="kpi" onclick="openRiskDrill('sharpe')">
+    <div class="kpi-val ${m.cls}">${m.v}</div>
+    <div class="kpi-lbl">${m.l}</div>
+  </div>`).join('');
+}
+
+function renderSigTicker() {
+  const el = document.getElementById('sig-ticker');
+  if (!el) return;
+  el.innerHTML = S.signals.map(s => `
+    <span class="ticker-item">
+      <span class="cyan">${s.c}</span> 
+      <span class="${s.dir === 'BUY' || s.dir === 'ADD' ? 'up' : 'down'}">${s.dir}</span> 
+      @${s.price.toFixed(2)} (${s.conf}%)
+    </span>`).join('');
+  const badge = document.getElementById('sig-count-badge');
+  if (badge) badge.textContent = S.signals.length + '条';
+}
+
+// AI Command Bar
+function toggleAI() {
+  const p = document.getElementById('ai-panel');
+  const f = document.getElementById('ai-fab');
+  p.classList.toggle('open');
+  f.classList.toggle('active');
+}
+
+function addAIMsg(text, cls) {
+  const msgs = document.getElementById('ai-messages');
+  if (!msgs) return;
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + (cls === 'user' ? 'user' : 'system');
+  div.innerHTML = cls === 'user' ? `<b>您:</b> ${text}` : `<b>Alpha-AI:</b> ${text}`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function quickCmd(cmd) {
+  addAIMsg(cmd, 'user');
+  setTimeout(() => processAICmd(cmd), 400);
+}
+
+function sendAI() {
+  const inp = document.getElementById('ai-inp');
+  if (!inp || !inp.value.trim()) return;
+  const cmd = inp.value.trim();
+  inp.value = '';
+  addAIMsg(cmd, 'user');
+  setTimeout(() => processAICmd(cmd), 400);
+}
+
+function processAICmd(cmd) {
+  const c = cmd.toLowerCase();
+  let resp = '';
+  if (c.includes('风险') || c.includes('risk')) { switchTab('risk'); resp = '✓ 已切换至风险面板。当前VaR=1.84%，整体风险可控。'; }
+  else if (c.includes('晨报') || c.includes('morning')) { switchTab('research'); resp = '✓ 已生成今日晨报，请查看投研报告面板。'; }
+  else if (c.includes('持仓') || c.includes('position')) { switchTab('positions'); resp = '✓ 已切换至持仓面板。'; }
+  else if (c.includes('信号') || c.includes('signal')) { switchTab('signals'); resp = `✓ 已切换至信号面板。当前${S.signals.filter(x => x.status === 'pending').length}条待处理。`; }
+  else if (c.includes('智能体') || c.includes('agent')) { switchTab('agents'); resp = '✓ 已切换至智能体面板。8个Agent在线运行。'; }
+  else if (c.includes('策略') || c.includes('strategy')) { switchTab('strategy'); resp = `✓ 已切换至策略库。共${STRAT_LIB.length}条策略。`; }
+  else if (c.includes('drl') || c.includes('置信')) { switchTab('drl'); resp = `✓ 已切换至DRL面板。Transformer-PPO置信度${Math.round(S.drlConf)}%。`; }
+  else if (c.includes('进化') || c.includes('evolution')) { switchTab('evolution'); resp = `✓ 已切换至进化面板。第${S.genNum}代，最优适应度9.24。`; }
+  else if (c.includes('买入')) { switchTab('live'); resp = '✓ 已打开买入界面。'; }
+  else if (c.includes('卖出')) { switchTab('live'); resp = '✓ 已打开卖出界面。'; }
+  else { resp = `已收到指令："${cmd}"。支持：切换面板、买入/卖出、生成报告、导出策略等。`; }
+  addAIMsg(resp, resp.startsWith('✓') ? 'sys-action' : 'system');
+}
+
+function showNotif(msg) {
+  let n = document.getElementById('notif');
+  if (!n) {
+    n = document.createElement('div');
+    n.id = 'notif';
+    n.style.cssText = 'position:fixed;top:56px;right:18px;z-index:600;background:var(--bg2);border:1px solid var(--green2);border-radius:6px;padding:10px 16px;font-size:12px;color:var(--green);box-shadow:0 4px 16px rgba(0,0,0,.5);transition:opacity .3s;max-width:320px';
+    document.body.appendChild(n);
+  }
+  n.textContent = msg;
+  n.style.opacity = '1';
+  clearTimeout(n._t);
+  n._t = setTimeout(() => { n.style.opacity = '0'; }, 3000);
+}
+
+// Chart Initialization
+window._charts = {};
+function mkChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) { console.warn('Canvas not found:', id); return null; }
+  if (window._charts[id]) { try { window._charts[id].destroy(); } catch(e) {} }
+  try { const c = new Chart(el.getContext('2d'), cfg); window._charts[id] = c; return c; }
+  catch(e) { console.warn('Chart error:', id, e); return null; }
+}
+
+const CD = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#8899aa', font: { size: 11 } } }, tooltip: { backgroundColor: '#1a2636', titleColor: '#e0eaf5', bodyColor: '#c0d0e0' } },
+  scales: { x: { ticks: { color: '#5a7080', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } }, y: { ticks: { color: '#5a7080', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } } }
+};
+const TL = ['09:30','09:45','10:00','10:15','10:30','10:45','11:00','11:30','13:00','13:30'];
+
+function initPanelCharts(name) {
+  if (name === 'overview') {
+    // Spark lines
+    mkChart('c-sh', { type: 'line', data: { labels: TL, datasets: [{ data: S.priceData.sh, borderColor: '#00c8ff', borderWidth: 2, pointRadius: 0, fill: { target: 'origin', above: 'rgba(0,200,255,.07)' }, tension: .4 }] }, options: { ...CD, plugins: { legend: { display: false } } } });
+    mkChart('c-sz', { type: 'line', data: { labels: TL, datasets: [{ data: S.priceData.sz, borderColor: '#00e676', borderWidth: 2, pointRadius: 0, fill: { target: 'origin', above: 'rgba(0,230,118,.07)' }, tension: .4 }] }, options: { ...CD, plugins: { legend: { display: false } } } });
+    mkChart('c-cy', { type: 'line', data: { labels: TL, datasets: [{ data: S.priceData.cy, borderColor: '#ffb300', borderWidth: 2, pointRadius: 0, fill: { target: 'origin', above: 'rgba(255,179,0,.07)' }, tension: .4 }] }, options: { ...CD, plugins: { legend: { display: false } } } });
+    mkChart('c-pf', { type: 'line', data: { labels: TL, datasets: [{ data: S.priceData.pf, borderColor: '#c77dff', borderWidth: 2, pointRadius: 0, fill: { target: 'origin', above: 'rgba(199,125,255,.07)' }, tension: .4 }] }, options: { ...CD, plugins: { legend: { display: false } } } });
+    // Equity curve
+    mkChart('c-equity', { type: 'line', data: { labels: ['T-60','T-50','T-40','T-30','T-20','T-10','T-5','Today'], datasets: [{ label: '组合净值', data: [102,103,104,105,106,107,108,108.4], borderColor: '#00c8ff', backgroundColor: 'rgba(0,200,255,0.1)', fill: true, tension: .4 }, { label: '沪深300', data: [100,101,102,103,104,105,105.5,105.8], borderColor: '#ffb300', borderDash: [5,5], tension: .4 }] }, options: CD });
+    // Intraday PnL
+    mkChart('c-intraday', { type: 'bar', data: { labels: ['09:30','10:00','10:30','11:00','11:30','13:30','14:00','14:30','15:00'], datasets: [{ data: [-0.5,1.2,0.8,-0.3,0.5,1.5,0.9,-0.2,1.0], backgroundColor: (ctx) => ctx.raw >= 0 ? '#00e676' : '#ff3d57', borderRadius: 3 }] }, options: { ...CD, plugins: { legend: { display: false } } } });
+    // Sector donut
+    mkChart('c-sector-donut', { type: 'doughnut', data: { labels: ['银行','白酒','新能源','芯片','医药','消费','电力'], datasets: [{ data: [18,15,22,12,14,11,8], backgroundColor: ['rgba(0,200,255,.8)','rgba(255,179,0,.8)','rgba(0,230,118,.8)','rgba(199,125,255,.8)','rgba(255,61,87,.8)','rgba(255,140,0,.8)','rgba(20,200,200,.8)'], borderWidth: 1.5 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'right', labels: { color: '#8899aa', font: { size: 10 }, boxWidth: 10 } } } } });
+  }
+}
+
+// Live Ticking
+function tick() {
+  ['sh','sz','cy','pf'].forEach(k => {
+    const arr = S.priceData[k];
+    const last = arr[arr.length - 1];
+    const delta = (Math.random() - .48) * (k === 'sh' ? 8 : k === 'sz' ? 25 : k === 'cy' ? 6 : 0.15);
+    arr.push(parseFloat((last + delta).toFixed(k === 'pf' ? 2 : 0)));
+    arr.shift();
+  });
+  S.positions.forEach(p => { p.price = parseFloat((p.price * (1 + (Math.random() - .495) * 0.003)).toFixed(2)); });
+  const shEl = document.getElementById('tb-sh');
+  if (shEl) shEl.textContent = S.priceData.sh[S.priceData.sh.length - 1].toLocaleString();
+  ['c-sh','c-sz','c-cy','c-pf'].forEach(id => {
+    const c = window._charts[id];
+    if (c) { c.data.datasets[0].data = [...S.priceData[id.replace('c-','')]]; c.update('none'); }
+  });
+  S.drlConf = Math.max(60, Math.min(95, S.drlConf + (Math.random() - .5) * 1.5));
+  const confEl = document.getElementById('tb-drl');
+  if (confEl) confEl.textContent = Math.round(S.drlConf) + '%';
+  S.pnl = parseFloat((S.pnl + (Math.random() - .47) * 0.02).toFixed(3));
+  const pnlEl = document.getElementById('tb-pnl');
+  if (pnlEl) { pnlEl.textContent = (S.pnl >= 0 ? '+' : '') + S.pnl + '%'; pnlEl.className = S.pnl >= 0 ? 'tb-val up' : 'tb-val down'; }
+}
+
+function updateCharts() {
+  ['c-equity','c-risk-tl'].forEach(id => {
+    const c = window._charts[id];
+    if (!c) return;
+    c.data.datasets[0].data = c.data.datasets[0].data.map(v => parseFloat((v + (Math.random() - .5) * .1).toFixed(3)));
+    c.update('none');
+  });
+  const pp = document.getElementById('panel-positions');
+  if (pp && pp.classList.contains('active')) renderPositions();
+}
+
+var _agentMsgIdx = 0;
+var EXTRA_MSGS = [
+  '市场开盘活跃，监测到3个新信号...','VaR实时计算中，当前1.84%...',
+  '策略进化第42代完成，适应度+0.12...','检测到聚宽数据更新，正在同步因子库...',
+  '贵州茅台买入订单已执行，成交价1924.30...','当前市场政权：震荡市，建议均值回归策略...',
+  'DRL推理完成，置信度72%，建议持仓不动...','风险敞口检查通过，VaR=1.84%<限额2.5%...'
+];
+function cycleAgentMsgs() {
+  var idx = _agentMsgIdx++ % S.agents.length;
+  var agent = S.agents[idx];
+  if (agent.st === 'on' || agent.st === 'thinking') {
+    agent.msg = EXTRA_MSGS[Math.floor(Math.random() * EXTRA_MSGS.length)];
+  }
+}
+
+// Init
+function init() {
+  console.log('Alpha-Genesis V3.0 初始化...');
+  renderPositions(); renderSignals(); renderAgents(); renderHeatGrid(); renderSysSnap(); renderSigTicker();
+  updateClock(); setInterval(updateClock, 1000);
+  setInterval(tick, 2500);
+  setInterval(updateCharts, 6000);
+  setInterval(cycleAgentMsgs, 8000);
+  S.chartsInit['overview'] = true;
+  initPanelCharts('overview');
+  console.log('Alpha-Genesis V3.0 初始化完成 ✓');
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

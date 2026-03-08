@@ -1,0 +1,13 @@
+:80 {
+    root * /opt/alpha
+    file_server
+    encode gzip
+    try_files {path} /index.html
+}
+
+dengdeng-trading.com, www.dengdeng-trading.com {
+    root * /opt/alpha
+    file_server
+    encode gzip
+    try_files {path} /index.html
+}

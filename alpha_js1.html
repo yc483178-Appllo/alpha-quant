@@ -1,0 +1,160 @@
+<script>
+// ════════════════════════════════════
+// STATE - 使用window对象确保全局可访问
+// ════════════════════════════════════
+window.S = {
+  curBroker:'ptrade', curModel:'transformer', regime:'震荡市',
+  drlConf:72, genNum:42, pnl:2.34,
+  chartsInit:{},
+  manualPicks:[],
+  brokerHistory:[
+    {t:'09:30',from:'QMT',to:'华泰PTrade',reason:'手动指令'},
+    {t:'08:45',from:'通用',to:'迅投QMT',reason:'自动：质量恢复'},
+    {t:'08:00',from:'华泰',to:'通用',reason:'故障切换'}
+  ],
+  priceData:{
+    sh:[3246,3254,3261,3265,3270,3278,3280,3278,3282,3285],
+    sz:[10700,10720,10735,10748,10760,10773,10780,10785,10810,10821],
+    cy:[2112,2118,2124,2128,2133,2136,2139,2134,2135,2134],
+    pf:[105.2,105.6,106.1,106.4,106.8,107.2,107.5,107.8,108.2,108.4]
+  },
+  positions:[
+    {c:'600036',n:'招商银行',cost:29.45,price:30.12,qty:10000,sector:'银行'},
+    {c:'000858',n:'五粮液',  cost:142.3,price:145.7,qty:200,sector:'白酒'},
+    {c:'600519',n:'贵州茅台',cost:1890.5,price:1924.3,qty:50,sector:'白酒'},
+    {c:'601318',n:'中国平安',cost:17.80,price:18.34,qty:5000,sector:'保险'},
+    {c:'300750',n:'宁德时代',cost:287.4,price:294.1,qty:300,sector:'新能源'},
+    {c:'002415',n:'海康威视',cost:34.50,price:35.67,qty:2000,sector:'安防'},
+    {c:'600900',n:'长江电力',cost:21.34,price:21.89,qty:5000,sector:'电力'},
+    {c:'688981',n:'中芯国际',cost:45.67,price:47.23,qty:1000,sector:'芯片'},
+    {c:'601166',n:'兴业银行',cost:24.12,price:24.78,qty:3000,sector:'银行'},
+    {c:'000333',n:'美的集团',cost:52.45,price:53.89,qty:1000,sector:'家电'},
+    {c:'600276',n:'恒瑞医药',cost:98.34,price:101.45,qty:500,sector:'医药'},
+    {c:'601888',n:'中国中免',cost:156.78,price:162.34,qty:200,sector:'消费'}
+  ],
+  signals:[
+    {t:'09:45',c:'600519',n:'贵州茅台',dir:'BUY',price:1924.30,conf:92,src:'DRL+Evolution',type:'drl',status:'pending'},
+    {t:'10:12',c:'000858',n:'五粮液',  dir:'ADD',price:145.67,conf:87,src:'Sentiment',type:'event',status:'pending'},
+    {t:'10:58',c:'300750',n:'宁德时代',dir:'SELL',price:294.12,conf:78,src:'Strategy:X7F2',type:'momentum',status:'pending'},
+    {t:'11:34',c:'600036',n:'招商银行',dir:'TAKE',price:30.12,conf:85,src:'Guard',type:'risk',status:'confirmed'},
+    {t:'13:22',c:'601318',n:'中国平安',dir:'BUY',price:18.34,conf:81,src:'Fundamental+JQ',type:'fundamental',status:'pending'},
+    {t:'14:15',c:'688981',n:'中芯国际',dir:'ADD',price:47.23,conf:79,src:'Picker',type:'momentum',status:'pending'},
+    {t:'14:56',c:'600900',n:'长江电力',dir:'REDUCE',price:21.89,conf:83,src:'DRL',type:'drl',status:'pending'}
+  ],
+  agents:[
+    {name:'Chief Agent',role:'决策协调',icon:'fa-crown',st:'thinking',tasks:7,health:99,bg:'rgba(0,200,255,.1)',msg:'综合7条信号，正在生成今日最终操作指令...'},
+    {name:'Scout Agent',role:'市场扫描',icon:'fa-telescope',st:'on',tasks:23,health:98,bg:'rgba(0,230,118,.08)',msg:'晨报完成，识别3条事件驱动信号，A股主板活跃'},
+    {name:'Picker Agent',role:'标的筛选',icon:'fa-bullseye',st:'on',tasks:19,health:95,bg:'rgba(0,230,118,.08)',msg:'5策略筛选完成，候选标的8只，已发送Chief'},
+    {name:'Guard Agent',role:'风控审批',icon:'fa-shield-halved',st:'on',tasks:5,health:100,bg:'rgba(0,230,118,.08)',msg:'VaR=1.84%，风险可控，今日操作计划已批准'},
+    {name:'Trader Agent',role:'订单执行',icon:'fa-bolt',st:'on',tasks:3,health:97,bg:'rgba(0,230,118,.08)',msg:'已执行3笔，成交率100%，T+1限制已检查'},
+    {name:'Review Agent',role:'绩效复盘',icon:'fa-chart-bar',st:'off',tasks:0,health:100,bg:'rgba(129,129,129,.06)',msg:'等待收盘后运行绩效归因分析'},
+    {name:'DRL Expert',role:'深度学习',icon:'fa-microchip',st:'on',tasks:12,health:94,bg:'rgba(0,230,118,.08)',msg:'Transformer-PPO推理完成，置信72%，政权:震荡'},
+    {name:'Sentiment',role:'舆情分析',icon:'fa-newspaper',st:'thinking',tasks:8,health:93,bg:'rgba(255,179,0,.07)',msg:'识别5个A股事件，宁德时代超预期季报+0.89'}
+  ],
+  brokers:[
+    {id:'ptrade',name:'华泰PTrade',st:'on',lat:2,sr:98.2,sl:1.2,cm:0.025,sc:87,acc:'HT_8888xxxx'},
+    {id:'qmt',  name:'迅投QMT',  st:'on',lat:5,sr:95.8,sl:1.8,cm:0.028,sc:76,acc:'XD_2024xxxx'},
+    {id:'easy', name:'通用Easytrader',st:'off',lat:9999,sr:0,sl:0,cm:0.05,sc:0,acc:'未连接'}
+  ],
+  execLog:[
+    {t:'14:32',c:'600519',dir:'买入',price:1924.30,qty:50,amt:96215,st:'成交'},
+    {t:'14:15',c:'300750',dir:'卖出',price:294.12,qty:100,amt:29412,st:'成交'},
+    {t:'13:45',c:'601318',dir:'买入',price:18.34,qty:1000,amt:18340,st:'部分成交'},
+    {t:'13:22',c:'000858',dir:'加仓',price:145.67,qty:50,amt:7284,st:'成交'}
+  ]
+};
+
+window.STRAT_TYPES = ['momentum','mean_rev','ml','event','drl'];
+window.STRAT_NAMES = {
+  momentum:['MA双均线','动量反转','价格突破','量价共振','趋势跟踪'],
+  mean_rev:['布林带回归','RSI超卖','统计套利','配对交易','均值漂移'],
+  ml:['XGBoost集成','LSTM预测','随机森林','LightGBM','Transformer'],
+  event:['财报超预期','政策红利','并购套利','指数调仓','大宗交易'],
+  drl:['PPO-V5','PPO-V6','Transformer-PPO','A3C政权','DDPG执行']
+};
+window.ALL_STOCKS = ['600519贵州茅台','000858五粮液','300750宁德时代','688981中芯国际','600036招商银行','601318中国平安','002415海康威视','600900长江电力','000333美的集团','600276恒瑞医药','601888中国中免','601166兴业银行','300014亿纬锂能','002594比亚迪','600887伊利股份'];
+
+function genStratLib() {
+  const lib = [];
+  let idx = 1;
+  for(const tp of window.STRAT_TYPES) {
+    const names = window.STRAT_NAMES[tp];
+    for(let v=0;v<10;v++) {
+      const gen = 20 + Math.floor(Math.random()*23);
+      const fit = parseFloat((4 + Math.random()*5.5).toFixed(2));
+      const ret = parseFloat((6 + Math.random()*16).toFixed(2));
+      const sharpe = parseFloat((0.8 + Math.random()*1.8).toFixed(2));
+      const dd = parseFloat((3 + Math.random()*9).toFixed(2));
+      const wr = parseFloat((48 + Math.random()*28).toFixed(1));
+      const trades = 80 + Math.floor(Math.random()*300);
+      const status = fit > 8 ? 'active' : fit > 6 ? 'standby' : 'retired';
+      const nm = names[v%names.length];
+      const matchedStocks = window.ALL_STOCKS.sort(()=>Math.random()-.5).slice(0,3).map(s=>s.slice(0,6));
+      lib.push({
+        id: `${tp.substring(0,3).toUpperCase()}-${String(idx).padStart(3,'0')}`,
+        type:tp, name:nm+(v>0?`-v${v+1}`:''), gen, fit, ret, sharpe, dd, wr, trades, status,
+        matchedStocks, params:{lookback:10+v*5, threshold:0.01+v*0.005, regime_filter: v%2===0},
+        created:`2025-${String(Math.ceil(Math.random()*12)).padStart(2,'0')}-${String(10+Math.floor(Math.random()*18)).padStart(2,'0')}`
+      });
+      idx++;
+    }
+  }
+  return lib.sort((a,b)=>b.fit-a.fit);
+}
+window.STRAT_LIB = genStratLib();
+window.STRAT_FILTER = 'all';
+
+function genTradeHistory() {
+  const codes=['600036','000858','600519','601318','300750','002415','600900','688981'];
+  const names=['招商银行','五粮液','贵州茅台','中国平安','宁德时代','海康威视','长江电力','中芯国际'];
+  const strats=['MA双均线','动量反转','XGBoost集成','财报超预期','Transformer-PPO'];
+  const regimes=['上升市','下降市','震荡市'];
+  const dirs=['买入','卖出'];
+  const r=[];
+  for(let i=0;i<180;i++){
+    const idx=i%codes.length;
+    const d=new Date(Date.now()-i*86400000);
+    r.push({
+      time:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+      code:codes[idx],name:names[idx],
+      dir:dirs[Math.floor(Math.random()*2)],
+      price:parseFloat((80+Math.random()*200).toFixed(2)),
+      qty:100*Math.ceil(Math.random()*10),
+      strategy:strats[Math.floor(Math.random()*strats.length)],
+      regime:regimes[Math.floor(Math.random()*3)],
+      pnl:parseFloat(((Math.random()-.4)*8).toFixed(2))
+    });
+  }
+  return r;
+}
+window.TRADES = genTradeHistory();
+
+window.RISK_DRILL = {
+  '市场风险':{pct:45,color:'#ff3d57',desc:'来自宏观市场系统性风险，主要为β敞口',
+    items:[{c:'300750 宁德时代',v:'12.3%',note:'高β=1.45，新能源板块联动'},
+           {c:'688981 中芯国际',v:'9.8%',note:'高β=1.62，科技政策敏感'},
+           {c:'600519 贵州茅台',v:'7.2%',note:'低β=0.78，白酒防御属性'},
+           {c:'601318 中国平安',v:'6.1%',note:'β=0.85，金融股联动'},
+           {c:'其余8只',v:'9.6%',note:'分散化配置，降低集中度'}]},
+  '流动性风险':{pct:25,color:'#ffb300',desc:'市场流动性不足，大额订单冲击成本',
+    items:[{c:'600519 贵州茅台',v:'8.2%',note:'单票价格高，大单冲击显著'},
+           {c:'688981 中芯国际',v:'6.5%',note:'科创板流动性较主板弱'},
+           {c:'300750 宁德时代',v:'5.4%',note:'换手率近期下降'},
+           {c:'600036 招商银行',v:'3.1%',note:'银行股流动性好，风险低'},
+           {c:'其余8只',v:'1.8%',note:'流动性风险分散，影响可控'}]},
+  '模型风险':{pct:20,color:'#00c8ff',desc:'模型过拟合/泛化不足导致的预测误差',
+    items:[{c:'DRL-Transformer',v:'7.5%',note:'新模型上线不足3月，历史数据有限'},
+           {c:'StratEvol G42',v:'5.8%',note:'遗传算法可能过拟合近期数据'},
+           {c:'情绪NLP',v:'4.2%',note:'极端事件下NLP精度下降'},
+           {c:'HMM政权切换',v:'2.5%',note:'政权识别延迟约2-3天'}]},
+  '执行风险':{pct:10,color:'#00e676',desc:'滑点、延迟、系统故障等执行层面风险',
+    items:[{c:'滑点成本',v:'3.2%',note:'平均1.2bps，震荡市摩擦增加'},
+           {c:'券商延迟',v:'2.8%',note:'PTrade平均2ms，极端行情可能增大'},
+           {c:'T+1限制',v:'2.5%',note:'A股T+1无法同日反手，影响止损效率'},
+           {c:'涨跌停',v:'1.5%',note:'10%/20%涨跌停限制，影响开平仓策略'}]}
+};
+
+window._charts = {};
+window.MANUAL_PICKS = [];
+window.ALL_PICK_STOCKS = window.S.positions.map(p=>({c:p.c,n:p.n,sector:p.sector,price:p.price}));
+</script>

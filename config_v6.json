@@ -1,0 +1,150 @@
+{
+  "version": "6.0.0",
+  "system_name": "Alpha V6.0 多维度智能交易系统",
+  "environment": "production",
+  
+  "database": {
+    "host": "localhost",
+    "port": 27017,
+    "name": "alpha_v6",
+    "auth_enabled": false,
+    "collections": {
+      "market_data": "market_realtime",
+      "trades": "trade_history",
+      "positions": "positions",
+      "signals": "signals",
+      "agents": "agent_states",
+      "knowledge": "historical_knowledge",
+      "reports": "research_reports",
+      "risk": "risk_metrics"
+    }
+  },
+  
+  "joinquant": {
+    "enabled": true,
+    "username": "your_username",
+    "password": "your_password",
+    "auth_method": "password",
+    "api_endpoint": "https://dataapi.joinquant.com",
+    "cache_duration": 300,
+    "rate_limit": 100
+  },
+  
+  "brokers": {
+    "primary": "simulation",
+    "fallback": "joinquant",
+    "available": ["simulation", "joinquant", "interactive_brokers"],
+    "auto_switch": {
+      "enabled": true,
+      "latency_threshold_ms": 500,
+      "error_rate_threshold": 0.05
+    },
+    "simulation": {
+      "initial_balance": 10000000,
+      "commission_rate": 0.00025,
+      "min_commission": 5.0,
+      "slippage": 0.001
+    }
+  },
+  
+  "agents": {
+    "chief_agent": {
+      "enabled": true,
+      "decision_threshold": 0.7,
+      "risk_appetite": "moderate",
+      "max_daily_trades": 50
+    },
+    "specialized_agents": [
+      {"name": "TrendAgent", "weight": 0.20, "enabled": true},
+      {"name": "MeanReversionAgent", "weight": 0.15, "enabled": true},
+      {"name": "MomentumAgent", "weight": 0.15, "enabled": true},
+      {"name": "BreakoutAgent", "weight": 0.10, "enabled": true},
+      {"name": "VolatilityAgent", "weight": 0.10, "enabled": true},
+      {"name": "SentimentAgent", "weight": 0.15, "enabled": true},
+      {"name": "MacroAgent", "weight": 0.10, "enabled": true},
+      {"name": "RiskAgent", "weight": 0.05, "enabled": true}
+    ]
+  },
+  
+  "drl": {
+    "enabled": true,
+    "model_path": "/opt/alpha-system/models/drl/",
+    "algorithm": "PPO",
+    "state_dim": 128,
+    "action_dim": 3,
+    "learning_rate": 0.0003,
+    "gamma": 0.99,
+    "update_frequency": 1000,
+    "checkpoint_interval": 10000
+  },
+  
+  "strategy_evolution": {
+    "enabled": true,
+    "population_size": 50,
+    "generations": 100,
+    "mutation_rate": 0.1,
+    "crossover_rate": 0.8,
+    "elite_ratio": 0.1,
+    "fitness_lookback_days": 30,
+    "evolution_interval_hours": 24
+  },
+  
+  "risk_management": {
+    "max_position_size_pct": 0.1,
+    "max_sector_exposure_pct": 0.3,
+    "max_drawdown_pct": 0.15,
+    "daily_var_limit": 0.02,
+    "correlation_threshold": 0.8,
+    "stop_loss_pct": 0.05,
+    "take_profit_pct": 0.1
+  },
+  
+  "api_server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "debug": false,
+    "cors_enabled": true,
+    "rate_limit": 1000,
+    "auth_required": false,
+    "ssl_enabled": false
+  },
+  
+  "dashboard": {
+    "refresh_interval_ms": 5000,
+    "max_data_points": 1000,
+    "theme": "dark",
+    "panels": [
+      "market_overview",
+      "portfolio_performance",
+      "agent_status",
+      "signal_feed",
+      "risk_metrics",
+      "trade_history",
+      "drl_state",
+      "broker_status",
+      "sentiment_analysis",
+      "strategy_evolution",
+      "execution_log",
+      "position_breakdown",
+      "correlation_matrix",
+      "volatility_surface"
+    ]
+  },
+  
+  "reporting": {
+    "enabled": true,
+    "auto_generate_daily": true,
+    "auto_generate_weekly": true,
+    "output_format": ["pdf", "html"],
+    "retention_days": 365,
+    "email_notifications": false
+  },
+  
+  "logging": {
+    "level": "INFO",
+    "file_path": "/opt/alpha-system/logs/",
+    "max_file_size_mb": 100,
+    "backup_count": 10,
+    "console_output": true
+  }
+}

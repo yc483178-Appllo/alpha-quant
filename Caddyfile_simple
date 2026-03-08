@@ -1,0 +1,12 @@
+{
+    auto_https off
+}
+
+:80 {
+    root * /opt/alpha
+    file_server
+    
+    handle_path /api/* {
+        reverse_proxy localhost:8765
+    }
+}

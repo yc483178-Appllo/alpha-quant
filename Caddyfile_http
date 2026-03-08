@@ -1,0 +1,4 @@
+:80 {
+    root * /opt/alpha
+    file_server
+}

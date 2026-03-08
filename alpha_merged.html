@@ -1,0 +1,150 @@
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,10 30,24 16,32 2,24 2,10" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+      <polyline points="8,16 12,12 16,15 20,10 24,16" fill="none" stroke="#00c8ff" stroke-width="1.8"/>
+      <circle cx="16" cy="16" r="3" fill="#00c8ff" opacity=".4"/>
+      <line x1="16" y1="2" x2="16" y2="8" stroke="#00e676" stroke-width="1.5"/>
+    </svg>
+    <span class="logo-text">ALPHA-GENESIS<span class="logo-ver">V3.0</span></span>
+  </div>
+  <div class="tb-badge"><span class="tb-lbl">政权</span><span class="tb-val amber" id="tb-regime">震荡</span></div>
+  <div class="tb-badge"><span class="tb-lbl">DRL</span><span class="tb-val cyan" id="tb-drl">72%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">进化</span><span class="tb-val cyan" id="tb-gen">G42</span></div>
+  <div class="tb-badge"><span class="sdot on"></span><span class="tb-lbl">券商</span><span class="tb-val up" id="tb-broker">华泰</span></div>
+  <div class="tb-badge"><span class="tb-lbl">持仓</span><span class="tb-val" id="tb-pos">12</span></div>
+  <div class="tb-badge"><span class="tb-lbl">P&L</span><span class="tb-val up" id="tb-pnl">+2.34%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">信号</span><span class="tb-val cyan" id="tb-sig">7</span></div>
+  <div class="tb-badge"><span class="tb-lbl">沪指</span><span class="tb-val up" id="tb-sh">3,284</span></div>
+  <span id="clock">--:--:--</span>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview"><i class="fa-solid fa-chart-line"></i>总览</button>
+    <button class="tab-btn" data-tab="positions"><i class="fa-solid fa-briefcase"></i>持仓</button>
+    <button class="tab-btn" data-tab="signals"><i class="fa-solid fa-satellite-dish"></i>信号</button>
+    <button class="tab-btn" data-tab="agents"><i class="fa-solid fa-robot"></i>智能体</button>
+    <button class="tab-btn" data-tab="strategy"><i class="fa-solid fa-brain"></i>策略库<span class="tab-badge">50+</span></button>
+    <button class="tab-btn" data-tab="portfolio"><i class="fa-solid fa-chart-pie"></i>组合构建</button>
+    <button class="tab-btn" data-tab="sentiment"><i class="fa-solid fa-newspaper"></i>舆情</button>
+    <button class="tab-btn" data-tab="drl"><i class="fa-solid fa-microchip"></i>DRL</button>
+    <button class="tab-btn" data-tab="risk"><i class="fa-solid fa-shield-halved"></i>风险</button>
+    <button class="tab-btn" data-tab="evolution"><i class="fa-solid fa-dna"></i>进化<span class="tab-badge up">G42</span></button>
+    <button class="tab-btn" data-tab="research"><i class="fa-solid fa-file-lines"></i>投研报告</button>
+    <button class="tab-btn" data-tab="broker"><i class="fa-solid fa-building-columns"></i>券商管理</button>
+    <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i>历史数据</button>
+    <button class="tab-btn" data-tab="live"><i class="fa-solid fa-bolt"></i>实盘操作<span class="tab-badge" style="background:var(--red)">LIVE</span></button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <!-- Panel 1: Overview -->
+  <div class="panel active" id="panel-overview">
+    <div class="g4" id="spark-row">
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">上证综指</span><span class="card-badge cb-green" id="sh-chg">+0.82%</span></div>
+        <div class="spark-val up" id="sh-val">3,284.5</div>
+        <div class="spark-canvas"><canvas id="c-sh"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">深证成指</span><span class="card-badge cb-red" id="sz-chg">-0.31%</span></div>
+        <div class="spark-val down" id="sz-val">10,521</div>
+        <div class="spark-canvas"><canvas id="c-sz"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('overview')">
+        <div class="spark-top"><span class="spark-name">创业板指</span><span class="card-badge cb-green" id="cy-chg">+1.24%</span></div>
+        <div class="spark-val up" id="cy-val">2,134</div>
+        <div class="spark-canvas"><canvas id="c-cy"></canvas></div>
+      </div>
+      <div class="spark-card" onclick="switchTab('portfolio')">
+        <div class="spark-top"><span class="spark-name">组合净值</span><span class="card-badge cb-cyan" id="pf-chg">+2.34%</span></div>
+        <div class="spark-val cyan" id="pf-val">108.4</div>
+        <div class="spark-canvas"><canvas id="c-pf"></canvas></div>
+      </div>
+    </div>
+    
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>60日净值对比（组合 / CSI300 / CSI500）</div></div>
+        <div class="ch ch-xl"><canvas id="c-equity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>今日分钟P&L走势（09:30→15:00）</div></div>
+        <div class="ch ch-xl"><canvas id="c-intraday"></canvas></div>
+      </div>
+    </div>
+    
+    <div class="g3">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>A股行业热力图（今日涨跌）</div></div>
+        <div class="heat-grid" id="heat-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-signal"></i>实时信号跑马灯</div><span class="card-badge cb-cyan" id="sig-count-badge">7条</span></div>
+        <div class="ticker-wrap" id="sig-ticker">加载中...</div>
+        <hr class="sep">
+        <div class="card-hdr" style="margin-top:8px"><div class="card-title"><i class="fa-solid fa-gauge-high"></i>系统快照</div></div>
+        <div class="kpi-grid" id="sys-snap"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>行业配置权重</div></div>
+        <div class="ch ch-md"><canvas id="c-sector-donut"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Positions -->
+  <div class="panel" id="panel-positions">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>当前持仓（12只）</div><span class="card-badge cb-cyan">A股 T+1</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓数</th><th>市值</th><th>盈亏额</th><th>盈亏率</th></tr></thead>
+            <tbody id="pos-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>持仓行业分布</div></div>
+          <div class="ch ch-md"><canvas id="c-pos-sector"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>个股盈亏贡献</div></div>
+          <div class="ch ch-md"><canvas id="c-stock-pnl"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Signals -->
+  <div class="panel" id="panel-signals">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-satellite-dish"></i>实时信号队列</div><span class="card-badge cb-amber" id="sig-pending">7条待处理</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>时间</th><th>代码/名称</th><th>方向</th><th>价格</th><th>来源</th><th>类型</th><th>置信</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="sig-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>信号类型分布</div></div><div class="ch ch-md"><canvas id="c-sig-pie"></canvas></div></div>
+        <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>置信度分布</div></div><div class="ch ch-md"><canvas id="c-sig-conf"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 4: Agents -->
+  <div class="panel" id="panel-agents">
+    <div class="ag-grid" id="ag-grid"></div>
+    <div class="g2" style="margin-top:10px">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-timeline"></i>Agent通信时间线</div></div>
+        <div id="ag-timeline" style="max-height:240px;overflow-y:auto"></div>

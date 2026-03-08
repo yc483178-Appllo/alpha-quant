@@ -1,0 +1,608 @@
+<script>
+// ════════════════════════════════════
+// TAB SWITCHING (lazy chart init)
+// ════════════════════════════════════
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const panel = document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  if(el) el.classList.add('active');
+  else {
+    const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if(btn) btn.classList.add('active');
+  }
+  if(!S.chartsInit[name]) { S.chartsInit[name]=true; initPanelCharts(name); }
+}
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>switchTab(btn.getAttribute('data-tab'),btn));
+});
+
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' CST';
+}
+function tick(){
+  ['sh','sz','cy','pf'].forEach(k=>{
+    const arr=S.priceData[k];
+    const chg=(Math.random()-.5)*.006;
+    arr.push(parseFloat((arr[arr.length-1]*(1+chg)).toFixed(2)));
+    if(arr.length>10) arr.shift();
+  });
+  const sh=S.priceData.sh.slice(-1)[0];
+  const el=document.getElementById('tb-sh');
+  if(el) el.textContent=sh.toFixed(0);
+  if(el) el.className='tb-val '+(sh>S.priceData.sh[0]?'up':'down');
+  const shVal=document.getElementById('sh-val');
+  if(shVal) shVal.textContent=sh.toFixed(1);
+  const pf=S.priceData.pf.slice(-1)[0];
+  S.pnl=parseFloat(((pf/100-1)*100).toFixed(2));
+  const pnlEl=document.getElementById('tb-pnl');
+  if(pnlEl){ pnlEl.textContent=(S.pnl>=0?'+':'')+S.pnl+'%'; pnlEl.className='tb-val '+(S.pnl>=0?'up':'down'); }
+  S.drlConf=Math.max(30,Math.min(98,S.drlConf+(Math.random()-.5)*3));
+  const drlEl=document.getElementById('tb-drl');
+  if(drlEl) drlEl.textContent=Math.round(S.drlConf)+'%';
+  ['sh','sz','cy','pf'].forEach(k=>{
+    const ch=window._charts['c-'+k];
+    if(ch){ch.data.datasets[0].data=[...S.priceData[k]];ch.update('none');}
+  });
+}
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function showDrill(title,html){
+  document.getElementById('drill-title').textContent=title;
+  document.getElementById('drill-body').innerHTML=html;
+  openModal('modal-drill');
+}
+
+function renderPositions(){
+  const tb=document.getElementById('pos-tbody');
+  if(!tb)return;
+  tb.innerHTML=S.positions.map(p=>{
+    const pnl=(p.price-p.cost)*p.qty;
+    const rate=((p.price-p.cost)/p.cost*100).toFixed(2);
+    return `<tr onclick="showDrill('${p.n}(${p.c})持仓详情',posDetail('${p.c}'))">
+      <td class="cyan">${p.c}</td><td>${p.n}</td>
+      <td>${p.cost.toFixed(2)}</td><td>${p.price.toFixed(2)}</td>
+      <td>${p.qty.toLocaleString()}</td>
+      <td>¥${(p.price*p.qty).toLocaleString()}</td>
+      <td class="${pnl>=0?'up':'down'}">¥${pnl.toFixed(0)}</td>
+      <td class="${rate>=0?'up':'down'}">${rate>=0?'+':''}${rate}%</td>
+    </tr>`;
+  }).join('');
+}
+function posDetail(code){
+  const p=S.positions.find(x=>x.c===code)||{};
+  const rate=p?((p.price-p.cost)/p.cost*100).toFixed(2):0;
+  return `<div class="m-section"><h4>持仓概况</h4>
+    <table class="tbl"><tbody>
+      <tr><td>持仓成本</td><td class="cyan">¥${p.cost?.toFixed(2)}</td></tr>
+      <tr><td>现价</td><td class="${rate>=0?'up':'down'}">¥${p.price?.toFixed(2)}</td></tr>
+      <tr><td>持仓量</td><td>${p.qty?.toLocaleString()}股</td></tr>
+      <tr><td>市值</td><td>¥${(p.price*p.qty)?.toLocaleString()}</td></tr>
+      <tr><td>浮盈亏</td><td class="${rate>=0?'up':'down'}">${rate>=0?'+':''}${rate}% / ¥${((p.price-p.cost)*p.qty)?.toFixed(0)}</td></tr>
+      <tr><td>行业</td><td>${p.sector}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="m-section"><h4>AI操作建议</h4>
+    <p style="font-size:12px;color:var(--text2);line-height:1.8">
+      当前政权「震荡市」下，DRL推荐持有该股票。<br>
+      近期支撑位: <span class="up">¥${(p.cost*0.97)?.toFixed(2)}</span> &nbsp;
+      压力位: <span style="color:var(--amber)">¥${(p.price*1.08)?.toFixed(2)}</span><br>
+      技术面: MA5/MA10金叉，MACD红柱扩大，短期偏多
+    </p>
+  </div>`;
+}
+
+function renderSignals(){
+  const tb=document.getElementById('sig-tbody');
+  if(!tb)return;
+  const dirMap={BUY:'买入',SELL:'卖出',ADD:'加仓',REDUCE:'减仓',TAKE:'止盈'};
+  const dirCol={BUY:'up',SELL:'down',ADD:'up',REDUCE:'down',TAKE:'neutral'};
+  tb.innerHTML=S.signals.map(s=>`
+    <tr onclick="showDrill('${s.n}信号详情',sigDetail(${JSON.stringify(s).replace(/"/g,'\u0026quot;')}))">
+      <td class="neutral">${s.t}</td>
+      <td><span class="cyan">${s.c}</span><br><span style="font-size:10px;color:var(--text3)">${s.n}</span></td>
+      <td><span class="${dirCol[s.dir]||''}" style="font-weight:600">${dirMap[s.dir]||s.dir}</span></td>
+      <td>¥${s.price.toFixed(2)}</td>
+      <td style="font-size:10px;color:var(--text3)">${s.src}</td>
+      <td><span class="tag tag-${s.type==='drl'?'drl':s.type==='event'?'ev':s.type==='momentum'?'mom':s.type==='fundamental'?'mr':'risk'}">${s.type}</span></td>
+      <td><div class="pbar" style="width:60px"><div class="pfill" style="width:${s.conf}%;background:${s.conf>85?'var(--green)':'var(--amber)'}"></div></div>${s.conf}%</td>
+      <td><span class="${s.status==='confirmed'?'up':'neutral'}">${s.status==='confirmed'?'✓已确认':'⏳待处理'}</span></td>
+      <td><button class="btn btn-primary btn-xs" onclick="event.stopPropagation();execSignal('${s.c}','${s.dir}')">执行</button></td>
+    </tr>`).join('');
+  const cnt=S.signals.filter(x=>x.status==='pending').length;
+  const pendEl=document.getElementById('sig-pending');
+  if(pendEl) pendEl.textContent=cnt+'条待处理';
+  const sEl=document.getElementById('tb-sig');
+  if(sEl) sEl.textContent=S.signals.length;
+}
+function sigDetail(s){
+  return `<div class="m-section"><h4>信号详情</h4>
+    <table class="tbl"><tbody>
+      <tr><td>股票</td><td class="cyan">${s.c} ${s.n}</td></tr>
+      <tr><td>方向</td><td class="${s.dir==='BUY'||s.dir==='ADD'?'up':'down'}">${s.dir}</td></tr>
+      <tr><td>价格</td><td>¥${s.price.toFixed(2)}</td></tr>
+      <tr><td>置信度</td><td class="${s.conf>85?'up':'neutral'}">${s.conf}%</td></tr>
+      <tr><td>来源</td><td>${s.src}</td></tr>
+      <tr><td>状态</td><td>${s.status}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="m-section"><h4>因果推理链</h4>
+    <p style="font-size:12px;color:var(--text2);line-height:1.8">
+    ${s.type==='event'?'业绩超预期 → 机构上调评级 → 资金流入 → 股价上行（预估持续1周）':
+      s.type==='drl'?'Transformer注意力机制识别到价格形态 → 政权适应权重 → 组合优化推荐':
+      s.type==='momentum'?'动量因子激活 → 量价共振 → 策略X7F2触发买点 → 历史胜率64%':
+      '多因子综合评分触发信号，基本面分析支持'}
+    </p>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-primary" onclick="execSignal('${s.c}','${s.dir}')">确认执行</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-drill')">暂不执行</button>
+  </div>`;
+}
+function execSignal(code,dir){
+  closeModal('modal-drill');
+  const pos=S.positions.find(p=>p.c===code);
+  const name=pos?pos.n:code;
+  addAIMsg(`指令已发送：${dir} ${name}(${code})，等待Guard审批...`,'sys-action');
+  showNotif(`✓ 信号 ${code} ${dir} 已发送执行队列`);
+}
+
+function renderAgents(){
+  const el=document.getElementById('ag-grid');
+  if(!el)return;
+  el.innerHTML=S.agents.map(a=>`
+    <div class="ag-card ${a.st==='on'?'active':a.st==='thinking'?'thinking':''}" onclick="showAgentDetail('${a.name}')">
+      <div class="ag-header">
+        <div class="ag-icon" style="background:${a.bg}">
+          <i class="fa-solid ${a.icon}" style="color:${a.st==='on'?'var(--green)':a.st==='thinking'?'var(--amber)':'var(--text3)'}"></i>
+        </div>
+        <div style="flex:1"><div class="ag-name">${a.name}</div><div class="ag-role">${a.role}</div></div>
+        <span class="sdot ${a.st}"></span>
+      </div>
+      <div class="ag-msg">${a.msg}</div>
+      <div class="ag-metrics">
+        <div class="ag-m"><div class="v">${a.tasks}</div><div class="l">任务</div></div>
+        <div class="ag-m"><div class="v">${a.health}%</div><div class="l">健康</div></div>
+        <div class="ag-m"><div class="v" style="color:${a.st==='on'?'var(--green)':a.st==='thinking'?'var(--amber)':'var(--text3)'}">
+          ${a.st==='on'?'在线':a.st==='thinking'?'推理中':'待机'}</div><div class="l">状态</div></div>
+      </div>
+    </div>`).join('');
+  const tl=document.getElementById('ag-timeline');
+  if(!tl)return;
+  const tlData=[
+    {t:'14:32',a:'Chief Agent',m:'综合7条信号，发出3条执行指令'},
+    {t:'14:28',a:'Sentiment',m:'宁德时代季报超预期事件，BUY信号+0.89'},
+    {t:'14:15',a:'DRL Expert',m:'Transformer推理完成，推荐权重调整'},
+    {t:'14:08',a:'Guard Agent',m:'VaR检查通过，批准今日操作计划'},
+    {t:'13:45',a:'Picker Agent',m:'5策略筛选完成，候选标的8只'},
+    {t:'13:22',a:'Scout Agent',m:'晨报完成：震荡市，关注新能源板块'},
+    {t:'13:10',a:'Evolution',m:'第42代进化完成，最优适应度9.24'},
+    {t:'09:30',a:'Trader Agent',m:'开盘就绪，T+1规则检查完成'}
+  ];
+  tl.innerHTML=tlData.map(e=>`<div class="tl-item"><span class="tl-time">${e.t}</span><span class="tl-agent">${e.a.split(' ')[0]}</span><span class="tl-msg">${e.m}</span></div>`).join('');
+}
+function showAgentDetail(name){
+  const a=S.agents.find(x=>x.name===name);
+  if(!a)return;
+  showDrill(name+' 详情',`
+    <div class="m-section"><h4>运行状态</h4>
+      <table class="tbl"><tbody>
+        <tr><td>职责</td><td>${a.role}</td></tr>
+        <tr><td>状态</td><td class="${a.st==='on'?'up':a.st==='thinking'?'neutral':''}">
+          ${a.st==='on'?'在线运行':a.st==='thinking'?'推理计算中':'待机'}</td></tr>
+        <tr><td>当前任务数</td><td>${a.tasks}</td></tr>
+        <tr><td>健康度</td><td class="up">${a.health}%</td></tr>
+      </tbody></table>
+    </div>
+    <div class="m-section"><h4>当前消息</h4>
+      <p style="font-size:12px;color:var(--text2);line-height:1.8;background:var(--bg3);padding:10px;border-radius:4px">${a.msg}</p>
+    </div>
+    <div class="m-section"><h4>发送自然语言指令</h4>
+      <div class="inp-row">
+        <input class="inp" style="flex:1" id="agent-cmd-inp" placeholder="向${a.name}发送指令...">
+        <button class="btn btn-primary btn-sm" onclick="sendAgentCmd('${a.name}')"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>`);
+}
+function sendAgentCmd(agentName){
+  const inp=document.getElementById('agent-cmd-inp');
+  if(!inp||!inp.value.trim())return;
+  const cmd=inp.value.trim();
+  inp.value='';
+  showNotif(`✓ 已向${agentName}发送指令：${cmd}`);
+  closeModal('modal-drill');
+  addAIMsg(`[${agentName}] 收到指令：${cmd}，正在处理...`,'sys-action');
+}
+
+function renderHeatGrid(){
+  const el=document.getElementById('heat-grid');
+  if(!el)return;
+  const sectors=[
+    {name:'银行',perf:2.34},{name:'白酒',perf:4.56},{name:'医药',perf:-1.23},
+    {name:'新能源',perf:-2.45},{name:'芯片',perf:3.67},{name:'电力',perf:1.23},
+    {name:'家电',perf:-0.45},{name:'地产',perf:-3.45},{name:'消费',perf:2.15},{name:'安防',perf:1.56}
+  ];
+  el.innerHTML=sectors.map(s=>{
+    const p=s.perf;
+    const alpha=Math.min(0.9,Math.abs(p)/5*0.8+0.2);
+    const bg=p>0?`rgba(0,230,118,${alpha})`:`rgba(255,61,87,${alpha})`;
+    const fg=Math.abs(p)>2?'#fff':'rgba(255,255,255,.9)';
+    return `<div class="heat-cell" style="background:${bg};color:${fg}" onclick="showSectorDrill('${s.name}',${p})">
+      <div class="hc-name">${s.name}</div>
+      <div class="hc-val">${p>0?'+':''}${p}%</div>
+    </div>`;
+  }).join('');
+}
+function showSectorDrill(name,perf){
+  showDrill(`${name}行业今日行情`,`
+    <div class="m-section"><h4>板块表现</h4>
+      <div style="font-size:28px;font-weight:700;${perf>=0?'color:var(--green)':'color:var(--red)'};margin-bottom:12px">
+        ${perf>=0?'+':''}${perf}%</div>
+      <table class="tbl"><tbody>
+        <tr><td>今日涨跌</td><td class="${perf>=0?'up':'down'}">${perf>=0?'+':''}${perf}%</td></tr>
+        <tr><td>成交量较昨日</td><td class="up">+15.3%</td></tr>
+        <tr><td>行业PE(TTM)</td><td>12.4x</td></tr>
+        <tr><td>北向资金</td><td class="${perf>=0?'up':'down'}">${perf>=0?'+':'-'}${Math.abs(perf*3.2).toFixed(1)}亿</td></tr>
+      </tbody></table>
+    </div>`);
+}
+
+function renderSysSnap(){
+  const el=document.getElementById('sys-snap');
+  if(!el)return;
+  el.innerHTML=[
+    {l:'VaR(95%)',v:'1.84%',cls:'up'},{l:'夏普比',v:'1.58',cls:'up'},
+    {l:'最大回撤',v:'-8.4%',cls:'down'},{l:'Alpha(月)',v:'+2.34%',cls:'up'},
+    {l:'Beta',v:'0.87',cls:''},{l:'Calmar',v:'0.97',cls:'up'}
+  ].map(m=>`<div class="kpi" onclick="openRiskDrill('sharpe')">
+    <div class="kpi-val ${m.cls}">${m.v}</div>
+    <div class="kpi-lbl">${m.l}</div>
+  </div>`).join('');
+}
+function renderSigTicker(){
+  const el=document.getElementById('sig-ticker');
+  if(!el)return;
+  el.innerHTML=S.signals.map(s=>
+    `<span class="ticker-item"><span class="cyan">${s.c}</span> <span class="${s.dir==='BUY'||s.dir==='ADD'?'up':'down'}">${s.dir}</span> @${s.price.toFixed(2)} (${s.conf}%)</span>`
+  ).join('');
+  const badge=document.getElementById('sig-count-badge');
+  if(badge) badge.textContent=S.signals.length+'条';
+}
+function renderSentiment(){
+  const el=document.getElementById('sent-grid');
+  if(!el)return;
+  const sentStocks=[
+    {c:'600519',n:'茅台',score:78},{c:'000858',n:'五粮液',score:72},{c:'300750',n:'宁德',score:65},{c:'601318',n:'平安',score:58},
+    {c:'600036',n:'招行',score:55},{c:'002415',n:'海康',score:48},{c:'688981',n:'中芯',score:42},{c:'600900',n:'长电',score:68},
+    {c:'601166',n:'兴业',score:52},{c:'000333',n:'美的',score:61},{c:'600276',n:'恒瑞',score:45},{c:'601888',n:'中免',score:70},
+    {c:'002594',n:'比亚迪',score:74},{c:'300014',n:'亿纬',score:63},{c:'600887',n:'伊利',score:57}
+  ];
+  el.innerHTML=sentStocks.map(s=>{
+    const pct=s.score;
+    const bg=pct>=65?'rgba(0,230,118,.07)':pct>=50?'rgba(255,179,0,.07)':'rgba(255,61,87,.07)';
+    return `<div class="heat-cell" style="background:${bg};border:1px solid var(--border);border-radius:4px" onclick="showSentDetail('${s.c}','${s.n}',${s.score})">
+      <div class="hc-name" style="font-size:10px;color:var(--text3)">${s.n}</div>
+      <div class="hc-val" style="font-size:14px;font-weight:700;${pct>=65?'color:var(--green)':pct>=50?'color:var(--amber)':'color:var(--red)'}">${pct}</div>
+    </div>`;
+  }).join('');
+}
+function renderBrokers(){
+  const el=document.getElementById('broker-cards');
+  if(!el)return;
+  el.innerHTML=S.brokers.map(b=>`
+    <div class="broker-card ${b.id===S.curBroker?'active-broker':''} ${b.st==='off'?'offline':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;font-weight:700;color:${b.id===S.curBroker?'var(--cyan)':'var(--text)'}">${b.id===S.curBroker?'▶ ':''}<i class="fa-solid fa-building-columns" style="margin-right:6px;font-size:12px"></i>${b.name}</span>
+        <span class="card-badge ${b.st==='on'?'cb-green':'cb-red'}">${b.st==='on'?'● 已连接':'○ 断开'}</span>
+      </div>
+      <div class="broker-metrics">
+        <div class="bm-item"><div class="bm-v ${b.lat<100?'up':'down'}">${b.lat<9999?b.lat+'ms':'--'}</div><div class="bm-l">延迟</div></div>
+        <div class="bm-item"><div class="bm-v ${b.sr>95?'up':b.sr>80?'neutral':''}">${b.sr||'--'}%</div><div class="bm-l">成功率</div></div>
+        <div class="bm-item"><div class="bm-v">${b.sl||'--'}bps</div><div class="bm-l">平均滑点</div></div>
+        <div class="bm-item"><div class="bm-v ${b.sc>80?'up':b.sc>60?'neutral':b.sc===0?'':'down'}">${b.sc}</div><div class="bm-l">质量评分</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">账户: ${b.acc} &nbsp;|&nbsp; 佣金: ${b.cm.toFixed(3)}%</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        ${b.id!==S.curBroker&&b.st==='on'?`<button class="btn btn-primary btn-sm" onclick="switchBroker('${b.id}','${b.name}','手动')"><i class="fa-solid fa-right-left"></i>手动切换</button>`:''}
+        ${b.id===S.curBroker?'<span class="btn btn-ghost btn-sm" style="cursor:default;color:var(--green)"><i class="fa-solid fa-check"></i>当前使用</span>':''}
+        <button class="btn btn-ghost btn-sm" onclick="showBrokerDetail('${b.id}')"><i class="fa-solid fa-chart-bar"></i>详情</button>
+      </div>
+    </div>`).join('');
+}
+function switchBroker(id,name,reason){
+  S.curBroker=id;
+  const tbEl=document.getElementById('tb-broker');
+  if(tbEl) tbEl.textContent=name.substring(0,4);
+  S.brokerHistory.unshift({t:new Date().toLocaleTimeString('zh-CN').substr(0,5),from:S.brokers.find(b=>b.id!==id&&b.st==='on')?.name||'未知',to:name,reason});
+  renderBrokers();
+  const liveEl=document.getElementById('live-broker');
+  if(liveEl) liveEl.value=id;
+  addAIMsg(`✓ 券商已切换至 ${name}（原因：${reason}）`,'sys-action');
+  showNotif(`✓ 券商切换：${name}`);
+}
+function showBrokerDetail(id){
+  const b=S.brokers.find(x=>x.id===id);
+  if(!b)return;
+  showDrill(b.name+' 详细指标',`
+    <div class="m-section"><h4>连接质量历史（最近5次）</h4>
+      <table class="tbl"><tbody>
+        <tr><td>延迟(ms)</td><td class="up">${[2,3,2,4,2].join('ms / ')}ms</td></tr>
+        <tr><td>成功率</td><td class="up">${b.sr}%</td></tr>
+        <tr><td>平均滑点</td><td class="neutral">${b.sl}bps</td></tr>
+        <tr><td>质量评分</td><td class="${b.sc>80?'up':b.sc>60?'neutral':'down'}">${b.sc}/100</td></tr>
+      </tbody></table>
+    </div>`);
+}
+function renderHistoryTable(data){
+  const tb=document.getElementById('hist-tbody');
+  if(!tb)return;
+  const rows=data||TRADES.slice(0,30);
+  tb.innerHTML=rows.map(t=>`<tr>
+    <td>${t.time}</td><td class="cyan">${t.code}</td><td>${t.name}</td>
+    <td class="${t.dir==='买入'?'up':'down'}">${t.dir}</td>
+    <td>${t.price.toFixed(2)}</td><td>${t.qty}</td>
+    <td><span class="tag tag-mom" style="font-size:10px">${t.strategy}</span></td>
+    <td>${t.regime}</td>
+    <td class="${t.pnl>=0?'up':'down'}">${t.pnl>=0?'+':''}${t.pnl.toFixed(2)}%</td>
+  </tr>`).join('');
+}
+function histSearch(){
+  const q=document.getElementById('hist-q').value.trim().toLowerCase();
+  if(!q){renderHistoryTable(TRADES.slice(0,30));return;}
+  const r=TRADES.filter(t=>t.code.includes(q)||t.name.includes(q)||t.strategy.toLowerCase().includes(q)||t.regime.includes(q)||t.dir.includes(q));
+  renderHistoryTable(r);
+}
+function renderEvolution(){
+  const hofEl=document.getElementById('hof-list');
+  if(hofEl){
+    const top5=STRAT_LIB.slice(0,5);
+    hofEl.innerHTML=top5.map((s,i)=>`
+      <div class="hof-item" onclick="showStratDetail('${s.id}')">
+        <span class="hof-rank r${i+1}">${i+1}</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${s.id} <span class="tag tag-${s.type==='momentum'?'mom':s.type==='drl'?'drl':s.type==='event'?'ev':s.type==='ml'?'ml':'mr'}">${s.type}</span></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">第${s.gen}代 · 适应度: <span class="up">${s.fit}</span> · 年化: <span class="up">+${s.ret}%</span></div>
+        </div>
+        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deployStrategy('${s.id}')">部署</button>
+      </div>`).join('');
+  }
+  const evoTb=document.getElementById('evo-strat-tbody');
+  if(evoTb){
+    evoTb.innerHTML=STRAT_LIB.slice(0,10).map(s=>`
+      <tr onclick="showStratDetail('${s.id}')">
+        <td class="cyan">${s.id}</td>
+        <td><span class="tag tag-${s.type==='momentum'?'mom':s.type==='drl'?'drl':s.type==='event'?'ev':s.type==='ml'?'ml':'mr'}">${s.type}</span></td>
+        <td>${s.gen}</td><td class="up">${s.fit}</td>
+        <td><span class="sdot ${s.status==='active'?'on':s.status==='standby'?'thinking':'off'}"></span>${s.status}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deployStrategy('${s.id}')"><i class="fa-solid fa-rocket"></i></button></td>
+      </tr>`).join('');
+  }
+}
+function renderExecLog(){
+  const tb=document.getElementById('exec-tbody');
+  if(!tb)return;
+  tb.innerHTML=S.execLog.map(l=>`<tr>
+    <td>${l.t}</td><td class="cyan">${l.c}</td>
+    <td class="${l.dir.includes('买')||l.dir.includes('加')?'up':'down'}">${l.dir}</td>
+    <td>${l.price.toFixed(2)}</td><td>${l.qty}</td>
+    <td>¥${l.amt.toLocaleString()}</td>
+    <td class="${l.st==='成交'?'up':'neutral'}">${l.st}</td>
+  </tr>`).join('');
+}
+function renderLivePerf(){
+  const el=document.getElementById('live-perf');
+  if(!el)return;
+  el.innerHTML=[
+    {l:'今日收益',v:'+2.34%',cls:'up'},{l:'成交金额',v:'¥151,251',cls:'cyan'},
+    {l:'下单次数',v:'4',cls:''},{l:'成功率',v:'100%',cls:'up'}
+  ].map(m=>`<div class="kpi"><div class="kpi-val ${m.cls}">${m.v}</div><div class="kpi-lbl">${m.l}</div></div>`).join('');
+}
+function renderStratLib(filter,searchQ){
+  const tb=document.getElementById('strat-tbody');
+  if(!tb)return;
+  let data=[...STRAT_LIB];
+  const q=(searchQ||document.getElementById('strat-search')?.value||'').toLowerCase();
+  const f=filter||STRAT_FILTER;
+  if(f!=='all') data=data.filter(s=>s.type===f||(f==='active'&&s.status==='active'));
+  if(q) data=data.filter(s=>s.id.toLowerCase().includes(q)||s.name.toLowerCase().includes(q)||s.type.includes(q));
+  const sortBy=document.getElementById('strat-sort')?.value||'fitness';
+  data.sort((a,b)=>b[{fitness:'fit',ret:'ret',sharpe:'sharpe',gen:'gen'}[sortBy]||'fit']-a[{fitness:'fit',ret:'ret',sharpe:'sharpe',gen:'gen'}[sortBy]||'fit']);
+  tb.innerHTML=data.map((s,i)=>`
+    <tr onclick="showStratDetail('${s.id}')">
+      <td>${i+1}</td><td class="cyan" style="font-weight:600">${s.id}</td>
+      <td><span class="tag tag-${s.type==='momentum'?'mom':s.type==='drl'?'drl':s.type==='event'?'ev':s.type==='ml'?'ml':'mr'}">${s.type}</span></td>
+      <td>G${s.gen}</td><td class="${s.fit>8?'up':s.fit>6?'neutral':'down'}">${s.fit}</td>
+      <td class="up">+${s.ret}%</td><td class="${s.sharpe>1.5?'up':'neutral'}">${s.sharpe}</td>
+      <td class="down">-${s.dd}%</td><td class="${s.wr>60?'up':'neutral'}">${s.wr}%</td><td>${s.trades}</td>
+      <td><span class="sdot ${s.status==='active'?'on':s.status==='standby'?'thinking':'off'}"></span>${s.status}</td>
+      <td style="font-size:10px;color:var(--text3)">${s.matchedStocks.join(', ')}</td>
+      <td><button class="btn btn-primary btn-xs" onclick="event.stopPropagation();assignStocks('${s.id}')"><i class="fa-solid fa-link"></i></button>
+        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deployStrategy('${s.id}')"><i class="fa-solid fa-rocket"></i></button></td>
+    </tr>`).join('');
+  const cntEl=document.getElementById('strat-count');
+  if(cntEl) cntEl.textContent=`共显示 ${data.length} / ${STRAT_LIB.length} 条策略记录`;
+}
+function filterStrat(type,el){
+  if(type) STRAT_FILTER=type;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderStratLib();
+}
+function sortStrategies(){renderStratLib();}
+function showStratDetail(id){
+  const s=STRAT_LIB.find(x=>x.id===id);
+  if(!s)return;
+  document.getElementById('strat-modal-title').textContent=`策略详情：${s.id} — ${s.name}`;
+  document.getElementById('strat-modal-body').innerHTML=`
+    <div class="g2"><div class="m-section"><h4>策略参数</h4>
+      <table class="tbl"><tbody>
+        <tr><td>类型</td><td><span class="tag tag-${s.type==='momentum'?'mom':s.type==='drl'?'drl':s.type==='event'?'ev':s.type==='ml'?'ml':'mr'}">${s.type}</span></td></tr>
+        <tr><td>进化代际</td><td class="cyan">G${s.gen}</td></tr>
+        <tr><td>适应度</td><td class="up">${s.fit}</td></tr>
+        <tr><td>年化收益</td><td class="up">+${s.ret}%</td></tr>
+      </tbody></table></div></div>
+    <div class="m-section"><h4>当前匹配股票</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${s.matchedStocks.map(c=>`<span class="tag tag-drl" style="padding:4px 10px;font-size:12px">${c}</span>`).join('')}
+      </div></div>`;
+  openModal('modal-strat');
+}
+function assignStocks(id){
+  const s=STRAT_LIB.find(x=>x.id===id);
+  if(!s)return;
+  s.matchedStocks=ALL_STOCKS.sort(()=>Math.random()-.5).slice(0,4).map(x=>x.slice(0,6));
+  showNotif(`✓ 策略${id} AI智能匹配更新`);
+  renderStratLib();
+  closeModal('modal-strat');
+}
+function deployStrategy(id){showNotif(`✓ 策略${id}已部署，开始实时运行...`);addAIMsg(`策略${id}已激活部署`,'sys-action');}
+function exportStrategies(){showNotif('✓ 策略库已导出 CSV');}
+function autoMatchStocks(){showNotif(`✓ AI智能匹配完成，${STRAT_LIB.length}条策略已更新`);addAIMsg(`全局AI智能匹配完成`,'sys-action');}
+
+function switchPortMode(mode,el){
+  document.querySelectorAll('.port-mode').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.port-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('port-'+mode).classList.add('active');
+  if(el) el.classList.add('active');
+  if(mode==='ai') renderAIAlloc();
+}
+function renderAIAlloc(){
+  const el=document.getElementById('ai-alloc');
+  if(!el)return;
+  const alloc=[
+    {n:'招商银行',w:12},{n:'贵州茅台',w:15},{n:'宁德时代',w:12},{n:'中芯国际',w:10},{n:'长江电力',w:8},{n:'其他分散',w:43}
+  ];
+  el.innerHTML=alloc.map(a=>`
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px">${a.n}</span><span style="font-weight:700;color:var(--cyan)">${a.w}%</span>
+    </div>`).join('');
+}
+function renderPickedStocks(){}
+function updateManualWeightChart(){}
+function autoEqualWeight(){}
+function applyManualPortfolio(){showNotif('✓ 手动组合已应用');}
+function searchStockPick(){}
+
+function openRiskDrill(type){
+  const drillMap={
+    var:{t:'VaR 风险价值详情',h:'<div class="m-section"><h4>VaR计算方法</h4><table class="tbl"><tbody><tr><td>历史模拟法VaR(95%,1日)</td><td class="up">1.84%</td></tr></tbody></table></div>'},
+    cvar:{t:'CVaR 条件风险价值',h:'<div class="m-section"><h4>尾部风险分析</h4><table class="tbl"><tbody><tr><td>CVaR(95%,1日)</td><td class="neutral">2.31%</td></tr></tbody></table></div>'},
+    dd:{t:'最大回撤分析',h:'<div class="m-section"><h4>回撤历史</h4><table class="tbl"><tbody><tr><td>最大回撤</td><td class="down">-8.4%</td></tr></tbody></table></div>'},
+    sharpe:{t:'夏普比率分析',h:'<div class="m-section"><h4>风险调整收益</h4><table class="tbl"><tbody><tr><td>夏普比率(60日)</td><td class="up">1.58</td></tr></tbody></table></div>'}
+  };
+  const d=drillMap[type];
+  if(!d)return;
+  document.getElementById('risk-drill-title').textContent=d.t;
+  document.getElementById('risk-drill-body').innerHTML=d.h;
+  openModal('modal-risk');
+}
+
+function genReport(type){
+  const now=new Date().toLocaleDateString('zh-CN');
+  const tpls={
+    morning:{title:'📊 晨报 — '+now+' A股开盘前分析',body:'<div class="m-section"><h4>今日市场研判</h4><p>震荡市下建议降低换手率...</p></div>'},
+    stock:{title:'📈 个股深度研究报告',body:'<div class="m-section"><h4>四维综合评分</h4><p>综合评级：持有/逢低加仓</p></div>'},
+    weekly:{title:'📋 周报',body:'<div class="m-section"><h4>本周回顾</h4><p>本周组合净值+2.34%...</p></div>'},
+    risk:{title:'⚠ 风险预警报告',body:'<div class="m-section"><h4>预警级别：中等</h4><p>当前VaR 1.84%处于正常范围...</p></div>'}
+  };
+  const tpl=tpls[type];
+  if(!tpl)return;
+  document.getElementById('report-title').textContent=tpl.title;
+  document.getElementById('report-body').innerHTML=tpl.body+'<button class="btn btn-primary btn-sm" onclick="closeModal(\'modal-report\')">关闭</button>';
+  openModal('modal-report');
+  renderReportList();
+}
+function exportReport(type){showNotif('✓ 报告已导出');}
+function renderReportList(){
+  const el=document.getElementById('report-list');
+  if(!el)return;
+  const reports=[
+    {type:'morning',label:'晨报',title:'今日晨报 — 震荡市，关注新能源板块',date:'今天 08:45'},
+    {type:'stock',label:'个股',title:'贵州茅台(600519)深度研究报告',date:'今天 09:28'}
+  ];
+  el.innerHTML=reports.map(r=>`
+    <div class="report-card" onclick="genReport('${r.type}')">
+      <span class="rtype-tag rt-${r.type}">${r.label}</span>
+      <div style="flex:1"><div style="font-size:13px">${r.title}</div><div style="font-size:10px;color:var(--text3)">${r.date}</div></div>
+    </div>`).join('');
+}
+
+function openTradeModal(type){
+  const titles={BUY:'确认买入',SELL:'确认卖出',STOP:'⚠ 紧急全平'};
+  document.getElementById('trade-title').textContent=titles[type]||type;
+  document.getElementById('trade-body').innerHTML=type==='STOP'?`
+    <div style="background:rgba(255,61,87,.07);border:1px solid var(--red2);padding:16px;margin-bottom:16px">
+      <p style="color:var(--red);font-weight:700">⚠ 这将触发所有持仓的市价卖出</p>
+    </div><button class="btn btn-danger" onclick="confirmTrade('STOP')">确认全平</button>`:
+  `<div class="g2" style="margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--text3)">股票代码/名称</div>
+        <select class="sel" id="t-code" style="width:100%">${S.positions.map(p=>`<option value="${p.c}">${p.c} ${p.n}</option>`).join('')}</select></div>
+      <div><div style="font-size:11px;color:var(--text3)">数量（股，100的整数倍）</div>
+        <input class="inp" id="t-qty" type="number" value="100" min="100" step="100" style="width:100%"></div>
+    </div>
+    <button class="btn ${type==='BUY'?'btn-success':'btn-danger'}" onclick="confirmTrade('${type}')">确认${type==='BUY'?'买入':'卖出'}</button>`;
+  openModal('modal-trade');
+}
+function confirmTrade(type){
+  const code=document.getElementById('t-code')?.value||'STOP';
+  const qty=document.getElementById('t-qty')?.value||0;
+  closeModal('modal-trade');
+  const pos=S.positions.find(p=>p.c===code)||{n:'全部'};
+  S.execLog.unshift({t:new Date().toLocaleTimeString('zh-CN').substr(0,5),c:code,dir:type==='BUY'?'买入':type==='SELL'?'卖出':'全平',price:pos.price||0,qty:parseInt(qty),amt:Math.round((pos.price||100)*parseInt(qty)),st:'已提交'});
+  renderExecLog();
+  showNotif(`✓ ${type==='BUY'?'买入':'卖出'}指令已提交：${code} ${qty}股`);
+  addAIMsg(`Trader Agent: ${type==='BUY'?'买入':'卖出'}${code} ${qty}股 — 已发送`,'sys-action');
+}
+function changeLiveBroker(v){
+  const names={ptrade:'华泰PTrade',qmt:'迅投QMT',easy:'通用Easytrader'};
+  switchBroker(v,names[v],'实盘面板切换');
+}
+function changeLiveModel(v){showNotif('✓ 模型已切换');addAIMsg('DRL Expert: 模型已切换','sys-action');}
+
+function toggleAI(){
+  const panel=document.getElementById('ai-panel');
+  const fab=document.getElementById('ai-fab');
+  panel.classList.toggle('open');
+  fab.classList.toggle('active');
+}
+function addAIMsg(text,cls='system'){
+  const msgs=document.getElementById('ai-messages');
+  if(!msgs)return;
+  const div=document.createElement('div');
+  div.className='ai-msg '+cls;
+  div.innerHTML=cls==='user'?`<b>您:</b> ${text}`:`<b>Alpha-AI:</b> ${text}`;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function quickCmd(cmd){addAIMsg(cmd,'user');setTimeout(()=>processAICmd(cmd),400);}
+function sendAI(){
+  const inp=document.getElementById('ai-inp');
+  if(!inp||!inp.value.trim())return;
+  const cmd=inp.value.trim();
+  inp.value='';
+  addAIMsg(cmd,'user');
+  setTimeout(()=>processAICmd(cmd),400);
+}
+function processAICmd(cmd){
+  const c=cmd.toLowerCase();
+  let resp='';
+  if(c.includes('风险')){switchTab('risk');resp='✓ 已切换至风险面板。当前VaR=1.84%。';}
+  else if(c.includes('晨报')){switchTab('research');genReport('morning');resp='✓ 已生成今日晨报。';}
+  else if(c.includes('策略')){switchTab('strategy');resp=`✓ 已切换至策略库。共${STRAT_LIB.length}条策略。`;}
+  else if(c.includes('持仓')){switchTab('positions');resp='✓ 已切换至持仓面板。';}
+  else if(c.includes('信号')){switchTab('signals');resp='✓ 已切换至信号面板。';}
+  else if(c.includes('drl')){switchTab('drl');resp=`✓ 已切换至DRL面板。当前置信度${Math.round(S.drlConf)}%。`;}
+  else if(c.includes('总览')){switchTab('overview');resp='✓ 已切换至总览面板。';}
+  else{resp=`已收到指令："${cmd}"。正在分析...`;}
+  addAIMsg(resp,resp.startsWith('✓')?'sys-action':'system');
+}
+function showNotif(msg){
+  let n=document.getElementById('notif');
+  if(!n){n=document.createElement('div');n.id='notif';n.style.cssText='position:fixed;top:54px;right:16px;z-index:600;background:var(--bg2);border:1px solid var(--green2);border-radius:6px;padding:8px 14px;font-size:12px;color:var(--green);box-shadow:0 4px 16px rgba(0,0,0,.5)';document.body.appendChild(n);}
+  n.textContent=msg;n.style.opacity='1';
+  clearTimeout(n._t);n._t=setTimeout(()=>{n.style.opacity='0';},2500);
+}
+</script>

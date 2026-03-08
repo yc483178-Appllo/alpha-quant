@@ -1,0 +1,10 @@
+# Alpha V6.0 策略进化引擎定时任务配置
+# 添加以下行到 crontab: crontab -e
+
+# 每日 09:00（开盘前）执行策略进化
+0 9 * * * cd /root/.openclaw/workspace/alpha-quant && python3 cron_evolution.py >> logs/cron_evolution.log 2>&1
+
+# 或者使用 cron 工具添加（通过 Kimi Claw）
+# 任务名称: 策略进化引擎
+# 触发时间: 每日 09:00
+# 执行指令: python3 /root/.openclaw/workspace/alpha-quant/cron_evolution.py

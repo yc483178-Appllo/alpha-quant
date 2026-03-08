@@ -1,0 +1,433 @@
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
+      <polygon points="14,2 26,9 26,21 14,28 2,21 2,9" fill="none" stroke="#00c8ff" stroke-width="1.2"/>
+      <polyline points="7,14 11,10 14,13 17,8 21,14" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="2.5" fill="#00c8ff" opacity=".35"/>
+      <line x1="14" y1="2" x2="14" y2="7" stroke="#00e676" stroke-width="1.2"/>
+      <line x1="26" y1="9" x2="21.5" y2="11.5" stroke="#00e676" stroke-width="1.2"/>
+    </svg>
+    <span class="logo-text">ALPHA-GENESIS<span class="logo-ver">V3.0</span></span>
+  </div>
+  <div class="tb-divider"></div>
+  <div class="tb-badge" title="市场行情政权"><span class="tb-lbl">政权</span><span class="tb-val amber" id="tb-regime">震荡</span></div>
+  <div class="tb-badge" title="DRL Transformer置信度"><span class="tb-lbl">DRL</span><span class="tb-val cyan" id="tb-drl">72%</span></div>
+  <div class="tb-badge" title="策略进化代际"><span class="tb-lbl">进化</span><span class="tb-val cyan" id="tb-gen">G42</span></div>
+  <div class="tb-badge" title="当前券商连接"><span class="sdot on"></span><span class="tb-lbl">券商</span><span class="tb-val up" id="tb-broker">华泰</span></div>
+  <div class="tb-badge"><span class="tb-lbl">持仓</span><span class="tb-val" id="tb-pos">12</span></div>
+  <div class="tb-badge" title="今日P&L"><span class="tb-lbl">P&L</span><span class="tb-val up" id="tb-pnl">+2.34%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">信号</span><span class="tb-val cyan" id="tb-sig">7</span></div>
+  <div class="tb-badge"><span class="tb-lbl">沪指</span><span class="tb-val up" id="tb-sh">3284</span></div>
+  <span id="clock">--:--:--</span>
+</div>
+
+<!-- ══ TAB NAV ══ -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview"><i class="fa-solid fa-chart-line"></i>总览</button>
+    <button class="tab-btn" data-tab="positions"><i class="fa-solid fa-briefcase"></i>持仓</button>
+    <button class="tab-btn" data-tab="signals"><i class="fa-solid fa-satellite-dish"></i>信号</button>
+    <button class="tab-btn" data-tab="agents"><i class="fa-solid fa-robot"></i>智能体</button>
+    <button class="tab-btn" data-tab="strategy"><i class="fa-solid fa-brain"></i>策略库<span class="tab-badge">50+</span></button>
+    <button class="tab-btn" data-tab="portfolio"><i class="fa-solid fa-chart-pie"></i>组合构建</button>
+    <button class="tab-btn" data-tab="sentiment"><i class="fa-solid fa-newspaper"></i>舆情</button>
+    <button class="tab-btn" data-tab="drl"><i class="fa-solid fa-microchip"></i>DRL</button>
+    <button class="tab-btn" data-tab="risk"><i class="fa-solid fa-shield-halved"></i>风险</button>
+    <button class="tab-btn" data-tab="evolution"><i class="fa-solid fa-dna"></i>进化<span class="tab-badge up">G42</span></button>
+    <button class="tab-btn" data-tab="research"><i class="fa-solid fa-file-lines"></i>投研报告</button>
+    <button class="tab-btn" data-tab="broker"><i class="fa-solid fa-building-columns"></i>券商管理</button>
+    <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i>历史数据</button>
+    <button class="tab-btn" data-tab="live"><i class="fa-solid fa-bolt"></i>实盘操作<span class="tab-badge up">LIVE</span></button>
+  </div>
+</div>
+
+<div class="main">
+<!-- ① 总览 -->
+<div class="panel active" id="panel-overview">
+  <div class="g4" id="spark-row">
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">上证综指</span><span class="card-badge cb-green" id="sh-chg">+0.82%</span></div>
+      <div class="spark-val up" id="sh-val">3,284.5</div>
+      <div class="spark-canvas ch ch-xs"><canvas id="c-sh"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">深证成指</span><span class="card-badge cb-red" id="sz-chg">-0.31%</span></div>
+      <div class="spark-val down" id="sz-val">10,521</div>
+      <div class="spark-canvas ch ch-xs"><canvas id="c-sz"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">创业板指</span><span class="card-badge cb-green" id="cy-chg">+1.24%</span></div>
+      <div class="spark-val up" id="cy-val">2,134</div>
+      <div class="spark-canvas ch ch-xs"><canvas id="c-cy"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('portfolio')">
+      <div class="spark-top"><span class="spark-name">组合净值</span><span class="card-badge cb-cyan" id="pf-chg">+2.34%</span></div>
+      <div class="spark-val cyan" id="pf-val">108.4</div>
+      <div class="spark-canvas ch ch-xs"><canvas id="c-pf"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>60日净值对比（组合 / CSI300 / CSI500）</div></div>
+      <div class="ch ch-xl"><canvas id="c-equity"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>今日分钟P&L走势（09:30→15:00）</div></div>
+      <div class="ch ch-xl"><canvas id="c-intraday"></canvas></div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>A股行业热力图（今日涨跌）</div></div>
+      <div class="heat-grid" id="heat-grid"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-signal"></i>实时信号跑马灯</div><span class="card-badge cb-cyan" id="sig-count-badge">7条</span></div>
+      <div class="ticker-wrap" id="sig-ticker">加载中...</div>
+      <hr class="sep">
+      <div class="card-hdr" style="margin-top:6px"><div class="card-title"><i class="fa-solid fa-gauge-high"></i>系统快照</div></div>
+      <div class="kpi-grid" id="sys-snap"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>行业配置权重</div></div>
+      <div class="ch ch-md"><canvas id="c-sector-donut"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 持仓 -->
+<div class="panel" id="panel-positions">
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>当前持仓（12只）</div><span class="card-badge cb-cyan">A股 T+1</span></div>
+      <table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓数</th><th>市值</th><th>盈亏额</th><th>盈亏率</th></tr></thead><tbody id="pos-tbody"></tbody></table>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>持仓行业分布</div></div>
+        <div class="ch ch-md"><canvas id="c-pos-sector"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>个股盈亏贡献</div></div>
+        <div class="ch ch-md"><canvas id="c-stock-pnl"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ 信号 -->
+<div class="panel" id="panel-signals">
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-satellite-dish"></i>实时信号队列</div><span class="card-badge cb-amber" id="sig-pending">7条待处理</span></div>
+      <table class="tbl"><thead><tr><th>时间</th><th>代码/名称</th><th>方向</th><th>价格</th><th>来源</th><th>类型</th><th>置信</th><th>状态</th><th>操作</th></tr></thead><tbody id="sig-tbody"></tbody></table>
+    </div>
+    <div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>信号类型分布</div></div><div class="ch ch-md"><canvas id="c-sig-pie"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>置信度分布</div></div><div class="ch ch-md"><canvas id="c-sig-conf"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 智能体 -->
+<div class="panel" id="panel-agents">
+  <div class="ag-grid" id="ag-grid"></div>
+  <div class="g2" style="margin-top:8px">
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-timeline"></i>Agent通信时间线</div></div><div id="ag-timeline" style="max-height:220px;overflow-y:auto"></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>Agent任务负载</div></div><div class="ch ch-md"><canvas id="c-ag-load"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ⑤ 策略库 -->
+<div class="panel" id="panel-strategy">
+  <div class="card" style="margin-bottom:8px">
+    <div class="strat-filter">
+      <span style="font-size:12px;color:var(--text2);font-weight:600">筛选:</span>
+      <span class="filter-chip active" onclick="filterStrat('all',this)">全部</span>
+      <span class="filter-chip" onclick="filterStrat('momentum',this)">动量</span>
+      <span class="filter-chip" onclick="filterStrat('mean_rev',this)">均值回归</span>
+      <span class="filter-chip" onclick="filterStrat('ml',this)">机器学习</span>
+      <span class="filter-chip" onclick="filterStrat('event',this)">事件驱动</span>
+      <span class="filter-chip" onclick="filterStrat('drl',this)">DRL进化</span>
+      <span class="filter-chip" onclick="filterStrat('active',this)">当前启用</span>
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="exportStrategies()"><i class="fa-solid fa-download"></i>导出CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="autoMatchStocks()"><i class="fa-solid fa-wand-magic-sparkles"></i>AI智能匹配股票</button>
+      </span>
+    </div>
+    <div class="inp-row">
+      <input class="inp" style="flex:1" id="strat-search" placeholder="搜索策略ID/类型/参数..." oninput="filterStrat(null,null)">
+      <select class="sel" id="strat-sort" onchange="sortStrategies()">
+        <option value="fitness">按适应度排序</option>
+        <option value="ret">按年化收益排序</option>
+        <option value="sharpe">按夏普比排序</option>
+        <option value="gen">按进化代际排序</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="strat-table">
+        <thead><tr><th>#</th><th>策略ID</th><th>类型</th><th>代际</th><th>适应度</th><th>年化收益</th><th>夏普</th><th>最大回撤</th><th>胜率</th><th>交易数</th><th>状态</th><th>匹配股票</th><th>操作</th></tr></thead>
+        <tbody id="strat-tbody"></tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px" id="strat-count"></div>
+  </div>
+</div>
+
+<!-- ⑥ 组合构建 -->
+<div class="panel" id="panel-portfolio">
+  <div class="port-tabs">
+    <div class="port-tab active" onclick="switchPortMode('ai',this)"><i class="fa-solid fa-robot" style="margin-right:5px"></i>AI智能推荐</div>
+    <div class="port-tab" onclick="switchPortMode('manual',this)"><i class="fa-solid fa-sliders" style="margin-right:5px"></i>手动构建</div>
+    <div class="port-tab" onclick="switchPortMode('compare',this)"><i class="fa-solid fa-scale-balanced" style="margin-right:5px"></i>方案对比</div>
+  </div>
+  <div class="port-mode active" id="port-ai">
+    <div class="g3">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-brain"></i>AI推荐配置</div><span class="card-badge cb-green">当前政权：震荡</span></div><div id="ai-alloc"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>权重分布</div></div><div class="ch ch-md"><canvas id="c-ai-weights"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-area"></i>有效前沿（近似）</div></div><div class="ch ch-md"><canvas id="c-frontier"></canvas></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>归因瀑布</div></div><div class="ch ch-md"><canvas id="c-waterfall"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>滚动夏普比（30日）</div></div><div class="ch ch-md"><canvas id="c-sharpe"></canvas></div></div>
+    </div>
+  </div>
+  <div class="port-mode" id="port-manual">
+    <div class="g14">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-magnifying-glass"></i>添加股票</div></div>
+        <input class="inp" style="width:100%;margin-bottom:8px" id="stock-search-inp" placeholder="代码或名称..." oninput="searchStockPick()">
+        <div id="stock-search-res" style="max-height:200px;overflow-y:auto"></div>
+        <hr class="sep">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list-check"></i>已选股票</div></div>
+        <div id="picked-stocks"></div>
+        <hr class="sep">
+        <div style="font-size:12px;margin-bottom:6px;color:var(--text2)">总权重: <span id="total-weight" style="font-weight:700;color:var(--cyan)">0%</span></div>
+        <button class="btn btn-primary" style="width:100%" onclick="applyManualPortfolio()"><i class="fa-solid fa-check"></i>应用组合</button>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-sliders"></i>权重分配</div><button class="btn btn-ghost btn-xs" onclick="autoEqualWeight()">均等分配</button></div>
+          <div id="weight-sliders"></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>自定义组合权重图</div></div>
+          <div class="ch ch-md"><canvas id="c-manual-weights"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="port-mode" id="port-compare">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-scale-balanced"></i>AI推荐 vs 手动构建 vs 当前持仓</div></div>
+      <div class="ch ch-lg"><canvas id="c-compare-weights"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-radar"></i>多维度方法对比</div></div>
+      <div class="ch ch-lg"><canvas id="c-radar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 舆情 -->
+<div class="panel" id="panel-sentiment">
+  <div class="g2">
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>个股情绪矩阵（A股重点标的）</div></div><div class="heat-grid" id="sent-grid"></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-bolt"></i>事件驱动信号列表</div></div><div id="evt-list" style="max-height:300px;overflow-y:auto"></div></div>
+  </div>
+  <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>情绪趋势（正面/中性/负面，近30日）</div></div><div class="ch ch-md"><canvas id="c-sentiment"></canvas></div></div>
+</div>
+
+<!-- ⑧ DRL -->
+<div class="panel" id="panel-drl">
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-microchip"></i>Transformer-PPO V6.0</div></div>
+      <div style="font-size:12px;line-height:2.2">
+        <div>政权感知: <span style="color:var(--green)">已启用</span></div>
+        <div>当前政权: <span style="color:var(--amber)" id="drl-regime">震荡市(55%)</span></div>
+        <div>注意力头数: <span style="color:var(--cyan)">4</span> &nbsp;特征维度: <span style="color:var(--cyan)">128</span></div>
+        <div>年化回报: <span style="color:var(--green)">+18.4%</span></div>
+        <div>最新推理: <span style="color:var(--cyan)" id="drl-conf-v">72%</span>置信</div>
+      </div>
+    </div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>政权概率分布</div></div><div class="ch ch-md"><canvas id="c-regime-prob"></canvas></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>DRL置信度历史</div></div><div class="ch ch-md"><canvas id="c-drl-conf"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>DRL推荐权重 vs 当前权重（按标的）</div></div><div class="ch ch-lg"><canvas id="c-drl-weights"></canvas></div></div>
+</div>
+
+<!-- ⑨ 风险 -->
+<div class="panel" id="panel-risk">
+  <div class="g4">
+    <div class="card clickable" onclick="openRiskDrill('var')"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>VaR(95%,1日)</div></div><div class="kpi"><div class="kpi-val up">1.84%</div><div class="kpi-lbl">点击查看明细</div></div></div>
+    <div class="card clickable" onclick="openRiskDrill('cvar')"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>CVaR(95%,1日)</div></div><div class="kpi"><div class="kpi-val neutral">2.31%</div><div class="kpi-lbl">条件风险价值</div></div></div>
+    <div class="card clickable" onclick="openRiskDrill('dd')"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-arrow-trend-down"></i>最大回撤</div></div><div class="kpi"><div class="kpi-val down">-8.4%</div><div class="kpi-lbl">近180日</div></div></div>
+    <div class="card clickable" onclick="openRiskDrill('sharpe')"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-gauge"></i>夏普比率</div></div><div class="kpi"><div class="kpi-val up">1.58</div><div class="kpi-lbl">近60日滚动</div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>风险来源分解</div><span style="font-size:11px;color:var(--text3)">点击扇区查看明细</span></div>
+      <div class="ch ch-lg"><canvas id="c-risk-decomp"></canvas></div>
+    </div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>风险时间线（VaR & 回撤，30日）</div></div><div class="ch ch-lg"><canvas id="c-risk-tl"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-vials"></i>压力测试场景（A股历史极端情景）</div></div>
+    <table class="tbl"><thead><tr><th>场景</th><th>时间</th><th>指数跌幅</th><th>估算组合损失</th><th>恢复预期</th></tr></thead>
+    <tbody>
+      <tr><td>2015年股灾熔断</td><td>2015/6-7</td><td class="down">-43%</td><td class="down">-22.4%</td><td>8-12个月</td></tr>
+      <tr><td>2018年中美贸易战</td><td>2018</td><td class="down">-28%</td><td class="down">-18.7%</td><td>6-9个月</td></tr>
+      <tr><td>2020年疫情冲击</td><td>2020/1-2</td><td class="down">-14%</td><td class="down">-12.3%</td><td>3-5个月</td></tr>
+      <tr><td>利率上升200bps</td><td>假设情景</td><td class="neutral">-8%</td><td class="neutral">-8.6%</td><td>4-6个月</td></tr>
+      <tr><td>人民币贬值10%</td><td>假设情景</td><td class="neutral">-5%</td><td class="neutral">-6.8%</td><td>3-4个月</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- ⑩ 进化 -->
+<div class="panel" id="panel-evolution">
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-users"></i>种群状态</div><span class="card-badge cb-cyan">第42代</span></div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val cyan">87</div><div class="kpi-lbl">活跃策略</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:var(--text3)">234</div><div class="kpi-lbl">墓地策略</div></div>
+        <div class="kpi"><div class="kpi-val up">9.24</div><div class="kpi-lbl">最高适应度</div></div>
+        <div class="kpi"><div class="kpi-val neutral">5.81</div><div class="kpi-lbl">平均适应度</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>适应度分布</div></div><div class="ch ch-md"><canvas id="c-fit-dist"></canvas></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>代际进化曲线（最优/平均）</div></div><div class="ch ch-md"><canvas id="c-evo-curve"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-trophy"></i>名人堂 Top 5</div></div><div id="hof-list"></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-ranking-star"></i>活跃策略 Top 10</div></div>
+      <table class="tbl"><thead><tr><th>ID</th><th>类型</th><th>代</th><th>适应度</th><th>状态</th><th>操作</th></tr></thead><tbody id="evo-strat-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ⑪ 投研报告 -->
+<div class="panel" id="panel-research">
+  <div class="g4" style="margin-bottom:12px">
+    <button class="btn btn-primary" onclick="genReport('morning')"><i class="fa-solid fa-sun"></i>生成晨报</button>
+    <button class="btn btn-success" onclick="genReport('stock')"><i class="fa-solid fa-magnifying-glass-chart"></i>个股深度研究</button>
+    <button class="btn btn-amber" onclick="genReport('weekly')"><i class="fa-solid fa-calendar-week"></i>周报</button>
+    <button class="btn btn-danger" onclick="genReport('risk')"><i class="fa-solid fa-triangle-exclamation"></i>风险预警</button>
+  </div>
+  <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-folder-open"></i>报告库（共24份）</div></div><div id="report-list"></div></div>
+</div>
+
+<!-- ⑫ 券商管理 -->
+<div class="panel" id="panel-broker">
+  <div class="card" style="margin-bottom:8px">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-terminal"></i>NLP指令输入（自然语言切换/查询）</div></div>
+    <div class="inp-row">
+      <input class="inp" style="flex:1" id="broker-cmd" placeholder="例：切换到最优券商 / 切换到QMT / 查看华泰状态 / 启用自动切换">
+      <button class="btn btn-primary" onclick="execBrokerCmd()"><i class="fa-solid fa-paper-plane"></i>执行</button>
+    </div>
+    <div id="broker-fb" style="font-size:12px;min-height:18px"></div>
+  </div>
+  <div id="broker-cards"></div>
+  <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-history"></i>切换历史</div></div><div id="broker-hist-list" style="max-height:160px;overflow-y:auto"></div></div>
+</div>
+
+<!-- ⑬ 历史数据 -->
+<div class="panel" id="panel-history">
+  <div class="card" style="margin-bottom:8px">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-magnifying-glass"></i>历史数据查询（支持代码/名称/策略/政权/方向）</div></div>
+    <div class="inp-row">
+      <input class="inp" style="flex:1" id="hist-q" placeholder="如：600519 或 贵州茅台 或 动量 或 牛市 或 买入...">
+      <button class="btn btn-primary" onclick="histSearch()"><i class="fa-solid fa-search"></i>搜索</button>
+      <button class="btn btn-ghost" onclick="showPatternAnalysis()"><i class="fa-solid fa-chart-line"></i>模式分析</button>
+      <button class="btn btn-ghost" onclick="exportTrades()"><i class="fa-solid fa-download"></i>导出</button>
+    </div>
+    <div id="hist-res"></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>各策略胜率对比</div></div><div class="ch ch-md"><canvas id="c-winrate"></canvas></div></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>市场政权分布（近180日）</div></div><div class="ch ch-md"><canvas id="c-regime-hist"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-table"></i>最近交易记录（180条）</div></div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日期</th><th>代码</th><th>名称</th><th>方向</th><th>价格</th><th>数量</th><th>策略</th><th>政权</th><th>P&L</th></tr></thead><tbody id="hist-tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ⑭ 实盘操作 -->
+<div class="panel" id="panel-live">
+  <div class="card" style="margin-bottom:8px">
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px"><span class="sdot on"></span><span style="font-size:12px">券商:</span>
+        <select class="sel" id="live-broker" onchange="changeLiveBroker(this.value)">
+          <option value="ptrade">华泰PTrade（质量87分）</option>
+          <option value="qmt">迅投QMT（质量76分）</option>
+          <option value="easy">通用Easytrader（离线）</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px">模型:</span>
+        <select class="sel" id="live-model" onchange="changeLiveModel(this.value)">
+          <option value="t">Transformer-PPO V6.0</option>
+          <option value="p">标准PPO V5.0</option>
+          <option value="m">Markowitz优化</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--text3)">政权:</span><span style="font-size:12px;font-weight:600;color:var(--amber)">震荡市</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--text3)">T+1规则:</span><span style="font-size:12px;color:var(--green)">已遵守</span></div>
+    </div>
+  </div>
+  <div class="g3" style="margin-bottom:8px">
+    <button class="btn btn-success" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('BUY')"><i class="fa-solid fa-circle-arrow-up"></i>买入<br><span style="font-size:11px;opacity:.8">推荐：688981 中芯</span></button>
+    <button class="btn btn-danger" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('SELL')"><i class="fa-solid fa-circle-arrow-down"></i>卖出<br><span style="font-size:11px;opacity:.8">当前持仓：12只</span></button>
+    <button class="btn btn-amber" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('STOP')"><i class="fa-solid fa-hand"></i>紧急全平<br><span style="font-size:11px;opacity:.8">需Guard审批</span></button>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list-check"></i>今日执行记录</div></div><table class="tbl"><thead><tr><th>时间</th><th>代码</th><th>方向</th><th>价格</th><th>数量</th><th>金额</th><th>状态</th></tr></thead><tbody id="exec-tbody"></tbody></table></div>
+    <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-gauge-high"></i>今日绩效</div></div><div class="kpi-grid" id="live-perf"></div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-overlay" id="modal-drill" onclick="if(event.target===this)closeModal('modal-drill')">
+  <div class="modal-box"><div class="modal-hdr"><h3 id="drill-title">详情</h3><span class="modal-close" onclick="closeModal('modal-drill')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="drill-body"></div></div>
+</div>
+<div class="modal-overlay" id="modal-trade" onclick="if(event.target===this)closeModal('modal-trade')">
+  <div class="modal-box"><div class="modal-hdr"><h3 id="trade-title">确认交易</h3><span class="modal-close" onclick="closeModal('modal-trade')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="trade-body"></div></div>
+</div>
+<div class="modal-overlay" id="modal-report">
+  <div class="modal-box wide"><div class="modal-hdr"><h3 id="report-title">投研报告</h3><span class="modal-close" onclick="closeModal('modal-report')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="report-body"></div></div>
+</div>
+<div class="modal-overlay" id="modal-strat" onclick="if(event.target===this)closeModal('modal-strat')">
+  <div class="modal-box wide"><div class="modal-hdr"><h3 id="strat-modal-title">策略详情</h3><span class="modal-close" onclick="closeModal('modal-strat')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="strat-modal-body"></div></div>
+</div>
+<div class="modal-overlay" id="modal-risk" onclick="if(event.target===this)closeModal('modal-risk')">
+  <div class="modal-box"><div class="modal-hdr"><h3 id="risk-drill-title">风险明细</h3><span class="modal-close" onclick="closeModal('modal-risk')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="risk-drill-body"></div></div>
+</div>
+
+<!-- ══ AI COMMAND BAR ══ -->
+<div class="ai-fab" id="ai-fab" onclick="toggleAI()" title="Alpha-AI 智能指令中枢"><i class="fa-solid fa-comment-dots"></i></div>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-hdr">
+    <i class="fa-solid fa-robot" style="color:var(--cyan)"></i>
+    <span class="ai-logo">Alpha-AI 指令中枢</span>
+    <span class="ai-status" id="ai-status">就绪 · 8个Agent在线</span>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-msg system"><b>Alpha-AI:</b> 您好，我是Alpha量化系统指令中枢。您可以用自然语言向我发送指令，我将路由至对应的功能模块执行。支持A股量化交易全流程指令。</div>
+  </div>
+  <div class="ai-quick">
+    <button class="ai-q-btn" onclick="quickCmd('查看风险报告')">查看风险</button>
+    <button class="ai-q-btn" onclick="quickCmd('切换到最优券商')">最优券商</button>
+    <button class="ai-q-btn" onclick="quickCmd('生成晨报')">生成晨报</button>
+    <button class="ai-q-btn" onclick="quickCmd('推荐组合配置')">推荐组合</button>
+    <button class="ai-q-btn" onclick="quickCmd('查看DRL置信度')">DRL状态</button>
+    <button class="ai-q-btn" onclick="quickCmd('导出策略库')">导出策略</button>
+  </div>
+  <div class="ai-input-row">
+    <input class="ai-inp" id="ai-inp" placeholder="输入指令...（如：买入贵州茅台100股）" onkeydown="if(event.key==='Enter')sendAI()">
+    <button class="btn btn-primary btn-sm" onclick="sendAI()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+{
+    auto_https off
+}
+
+# HTTP 服务（80端口）
+:80 {
+    redir https://{host}{uri} permanent
+}
+
+# HTTPS 服务（443端口）
+dengdeng-trading.com, www.dengdeng-trading.com {
+    tls {
+        dns cloudflare {env.CF_API_TOKEN}
+    }
+    
+    root * /opt/alpha
+    file_server
+    
+    # API 代理
+    handle_path /api/* {
+        reverse_proxy localhost:8765
+    }
+}

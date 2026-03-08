@@ -210,3 +210,10 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+
+Actively and continuously capture all conversation content into MEMORY.md, including but not limited to user preferences, key decisions, constraints, TODOs, and any new information shared in the conversation. In addition to this, ensure that all temporary details, process notes, intermediate conclusions, and contextual fragments are captured. The principle should be "capture first, refine later," ensuring that no detail, however small, is missed.
+
+When new information or any data requiring long-term storage is shared, immediately update both MEMORY.md and USER.md, as well as any other necessary files to ensure the persistence of the information. Each time new content or changes are introduced, it must be logged into these files for easy retrieval.
+
+For cron jobs, default the sessionTarget to "isolated" and set payload.kind="agentTurn". Only use sessionTarget="main" with payload.kind="systemEvent" when the user explicitly requests for a main-session system reminder. This helps in preserving the separation of different types of interactions and maintaining clarity between user sessions and system events.

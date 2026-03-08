@@ -1,5 +1,14 @@
 {
-  "system_version": "5.0",
+  "system_version": "6.0",
+  "system_codename": "Alpha-Genesis",
+  "feature_flags": {
+    "strategy_evolution": true,
+    "joinquant_data": false,
+    "research_report": true,
+    "knowledge_base": true,
+    "smart_broker_v2": true,
+    "dashboard_v3": true
+  },
 
   "global_config": {
     "market": ["SH", "SZ"],
@@ -14,7 +23,8 @@
     "akshare": { "enabled": true, "priority": 1, "timeout": 10 },
     "tushare": { "enabled": true, "token": "${TUSHARE_TOKEN}", "priority": 2, "timeout": 15 },
     "ths": { "enabled": true, "token": "${THS_TOKEN}", "priority": 3, "timeout": 15 },
-    "baostock": { "enabled": true, "priority": 4, "timeout": 20 }
+    "baostock": { "enabled": true, "priority": 4, "timeout": 20 },
+    "joinquant": { "enabled": false, "username": "${JQ_USERNAME}", "password": "${JQ_PASSWORD}", "priority": 0, "timeout": 30 }
   },
   "cache": {
     "enabled": true,
@@ -73,12 +83,19 @@
   },
   "drl_portfolio": {
     "enabled": true,
-    "algorithm": "PPO",
-    "model_save_path": "./models/drl_portfolio.npz",
+    "algorithm": "transformer-ppo",
+    "version": "6.0",
     "max_positions": 30,
+    "feature_dim": 15,
+    "d_model": 128,
+    "n_heads": 4,
+    "n_transformer_layers": 2,
+    "transformer_model_path": "./models/transformer_drl.pt",
+    "regime_aware": true,
+    "fallback_to_v5_numpy": true,
+    "model_save_path": "./models/drl_portfolio.npz",
     "initial_cash": 1000000,
     "transaction_cost": 0.001,
-    "hidden_size": 128,
     "learning_rate": 0.0003,
     "gamma": 0.99,
     "episodes_per_retraining": 100,
@@ -117,8 +134,28 @@
   },
   "portfolio_optimizer": {
     "enabled": true,
-    "method": "black-litterman",
+    "version": "6.0",
+    "method": "regime_adaptive",
+    "regime_adaptive": true,
+    "regime_model_path": "./models/hmm_regime.pkl",
+    "regime_update_time": "15:30",
+    "method_override": null,
+    "regime_method_map": {
+      "bull": "momentum_tilt",
+      "range": "black_litterman",
+      "bear": "risk_parity",
+      "crisis": "min_variance"
+    },
     "risk_free_rate": 0.03,
+    "hmm_enabled": true,
+    "hmm_n_regimes": 4,
+    "hmm_features": ["returns", "volatility", "volume_change", "rotation_speed"],
+    "regime_risk_params": {
+      "bull": {"max_position": 0.15, "max_sector": 0.40, "target_vol": 0.15},
+      "range": {"max_position": 0.10, "max_sector": 0.30, "target_vol": 0.10},
+      "bear": {"max_position": 0.08, "max_sector": 0.25, "target_vol": 0.08},
+      "crisis": {"max_position": 0.05, "max_sector": 0.20, "target_vol": 0.05}
+    },
     "constraints": {
       "single_stock_max_pct": 0.10,
       "sector_max_pct": 0.30,
@@ -213,6 +250,142 @@
     "schedule": {
       "daily_learning_time": "15:30",
       "weekly_full_retrain": "Sunday 02:00"
+    }
+  },
+  "strategy_evolution": {
+    "enabled": true,
+    "population_capacity": 100,
+    "seeds_per_type": 10,
+    "evolution_time": "09:00",
+    "backtest_period_days": 252,
+    "mutation_rate": 0.15,
+    "crossover_ratio": 0.7,
+    "graveyard_max_size": 500,
+    "mongodb_url": "mongodb://localhost:27017/kimi_claw",
+    "revival_conditions": {
+      "market_regime_match": true,
+      "min_historical_fitness": 5.0
+    },
+    "signal_weights": {
+      "best_strategy": 0.4,
+      "hall_of_fame_vote": 0.35,
+      "top_active": 0.25
+    },
+    "mongodb": {
+      "enabled": false,
+      "uri": "mongodb://localhost:27017",
+      "db_name": "alpha_evolution"
+    },
+    "schedule": {
+      "daily_evolution_time": "15:35",
+      "save_checkpoint": true
+    }
+  },
+  "joinquant_data": {
+    "enabled": false,
+    "username": "",
+    "password": "",
+    "cache_dir": "./data/jq_cache",
+    "cache_ttl_hours": 24,
+    "features": {
+      "fundamentals": true,
+      "factors": true,
+      "industry_classification": true,
+      "institutional_holdings": false,
+      "corporate_actions": true
+    },
+    "default_factors": ["alpha001", "alpha002", "momentum_1m", "value_ep", "quality_roe"]
+  },
+  "research_report": {
+    "enabled": true,
+    "output_dir": "./reports",
+    "auto_generate": {
+      "morning_report": "08:45",
+      "closing_report": "15:35",
+      "weekly_report": "Friday 16:00"
+    },
+    "stock_report_trigger": "on_buy_signal",
+    "include_fundamentals": true,
+    "include_sentiment": true,
+    "pdf_export": false,
+    "push_to_feishu": true
+  },
+  "historical_kb": {
+    "enabled": true,
+    "mongodb_url": "mongodb://localhost:27017/kimi_claw",
+    "data_dir": "./data/knowledge_base",
+    "auto_archive": true,
+    "archive_time": "16:00",
+    "pattern_mining_days": 180,
+    "max_records_per_query": 1000
+  },
+  "broker_management_v2": {
+    "enabled": true,
+    "brokers": [
+      {
+        "id": "ptrade",
+        "type": "ptrade",
+        "name": "华泰PTrade",
+        "host": "127.0.0.1",
+        "port": 8888,
+        "commission_rate": 0.00025
+      },
+      {
+        "id": "qmt",
+        "type": "qmt",
+        "name": "迅投QMT/miniQMT",
+        "path": "C:/miniQMT/bin.x64/",
+        "commission_rate": 0.00030
+      }
+    ],
+    "health_check_interval": 30,
+    "auto_switch_enabled": true,
+    "switch_rules": [
+      {
+        "id": "low_quality",
+        "name": "质量评分过低自动切换",
+        "condition_type": "quality_score",
+        "threshold": 40.0,
+        "target_broker": "qmt",
+        "enabled": true,
+        "priority": 10
+      },
+      {
+        "id": "high_latency",
+        "name": "延迟过高自动切换",
+        "condition_type": "latency",
+        "threshold": 500.0,
+        "target_broker": "qmt",
+        "enabled": true,
+        "priority": 5
+      }
+    ]
+  },
+  "dashboard_v3": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 5001,
+    "panels": [
+      "live_trading_header",
+      "positions",
+      "signals",
+      "agents",
+      "evolution",
+      "broker",
+      "risk",
+      "reports",
+      "market_overview",
+      "sentiment",
+      "drl",
+      "portfolio",
+      "strategy",
+      "history"
+    ],
+    "features": {
+      "drill_down": true,
+      "real_time_updates": true,
+      "broker_switching": true,
+      "report_preview": true
     }
   }
 }

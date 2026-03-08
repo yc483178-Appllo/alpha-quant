@@ -1,0 +1,21 @@
+{
+    auto_https off
+}
+
+http://dengdeng-trading.com, http://www.dengdeng-trading.com, http://120.76.55.222 {
+    root * /opt/alpha
+    file_server
+    
+    # V3.0 看板 API 路由
+    handle_path /v3/api/* {
+        reverse_proxy localhost:5001
+    }
+    
+    # V2.0 API 路由 (signal_server)
+    handle_path /api/* {
+        reverse_proxy localhost:8765
+    }
+    
+    # 默认首页
+    try_files {path} /Alpha量化看板V3.0.html
+}

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha-Genesis V3.0 · A股量化引擎 · KimiClaw</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#070d19;--bg2:#0d1628;--bg3:#111f35;--card:#131f32;
+  --border:#1a2e4a;--border2:#1e3a5f;--text:#c9d4e3;--text2:#8a9ab5;--text3:#516478;
+  --cyan:#00c8ff;--cyan2:#0099cc;--green:#00e676;--green2:#00a152;
+  --red:#ff3d57;--red2:#c62828;--amber:#ffb300;--amber2:#e65100;
+  --purple:#7c4dff;--teal:#1de9b6;--lime:#c6ff00;
+  --font:'Inter','Microsoft YaHei','Helvetica Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;overflow-x:hidden;height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#050c1a,#0a1628,#050c1a);border-bottom:1px solid var(--border2);padding:0 16px;height:44px;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px;margin-right:8px}
+.logo-icon{width:28px;height:28px;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:700;color:var(--cyan);letter-spacing:.5px}
+.logo-ver{font-size:10px;color:var(--text3);margin-left:3px}
+.tb-badge{display:flex;align-items:center;gap:5px;background:rgba(13,22,40,.9);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-size:11px}
+.tb-lbl{color:var(--text3)}.tb-val{font-weight:600}
+.tb-val.up{color:var(--green)}.tb-val.down{color:var(--red)}.tb-val.cyan{color:var(--cyan)}.tb-val.amber{color:var(--amber)}
+.tb-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tb-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+#clock{color:var(--text3);font-size:11px;margin-left:auto}
+.tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+.tabs{display:flex;padding:0 8px;gap:1px;min-width:max-content}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:8px 13px;cursor:pointer;border:none;background:transparent;color:var(--text3);font-size:11.5px;border-bottom:2px solid transparent}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,200,255,.05)}
+.tab-badge{font-size:9px;padding:1px 5px;border-radius:2px;background:var(--green);color:#000;margin-left:2px}
+.main{flex:1;overflow:hidden;position:relative}
+.panel{display:none;height:100%;overflow-y:auto;padding:10px 12px}
+.panel.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.card-title i{color:var(--cyan);font-size:11px}
+.card-badge{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid;font-weight:600}
+.cb-green{background:rgba(0,230,118,.07);color:var(--green);border-color:var(--green2)}
+.cb-red{background:rgba(255,61,87,.07);color:var(--red);border-color:var(--red2)}
+.cb-cyan{background:rgba(0,200,255,.07);color:var(--cyan);border-color:var(--cyan2)}
+.cb-amber{background:rgba(255,179,0,.07);color:var(--amber);border-color:var(--amber2)}
+.cb-purple{background:rgba(124,77,255,.07);color:var(--purple);border-color:var(--purple)}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{text-align:center;padding:8px 4px}
+.kpi-val{font-size:22px;font-weight:700}
+.kpi-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+.spark-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:10px 12px;cursor:pointer}
+.spark-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.spark-name{font-size:11px;color:var(--text2);font-weight:600}
+.spark-val{font-size:18px;font-weight:700}
+.spark-chg{font-size:11px;margin-top:2px}
+.spark-canvas{height:48px;position:relative}
+.ch{position:relative}.ch-md{height:180px}.ch-lg{height:220px}.ch-xl{height:260px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{color:var(--text3);font-size:10.5px;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+.tbl td{padding:5px 8px;border-bottom:1px solid rgba(26,46,74,.5);font-size:12px}
+.tbl tr:hover td{background:rgba(0,200,255,.03);cursor:pointer}
+.tbl .up{color:var(--green)}.tbl .down{color:var(--red)}.tbl .neutral{color:var(--amber)}
+.pbar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:3px 0}
+.pfill{height:100%;border-radius:2px;transition:width .3s}
+.btn{padding:6px 14px;border-radius:4px;border:none;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--cyan);color:#000}.btn-success{background:var(--green2);color:#fff}
+.btn-danger{background:var(--red2);color:#fff}.btn-amber{background:var(--amber2);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-xs{padding:2px 6px;font-size:10px}.btn-sm{padding:3px 9px;font-size:11px}
+.inp{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;color:var(--text);font-size:12px;outline:none}
+.inp:focus{border-color:var(--cyan)}.inp-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.sel{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 10px;color:var(--text);font-size:12px}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sdot.on{background:var(--green);box-shadow:0 0 6px rgba(0,230,118,.6)}
+.sdot.thinking{background:var(--amber);animation:blink 1.2s infinite}
+.sdot.off{background:var(--text3)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.heat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.heat-cell{border-radius:4px;padding:8px 4px;text-align:center;cursor:pointer}
+.heat-cell .hc-name{font-size:11px;font-weight:600}
+.heat-cell .hc-val{font-size:13px;font-weight:700;margin-top:3px}
+.ticker-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;overflow:hidden;white-space:nowrap;font-size:11px;color:var(--text2)}
+.ticker-item{display:inline-block;margin-right:30px}
+.ag-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ag-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer}
+.ag-card.active{border-color:var(--green2)}.ag-card.thinking{border-color:var(--amber)}
+.ag-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ag-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ag-name{font-size:12px;font-weight:700}.ag-role{font-size:10px;color:var(--text3)}
+.ag-msg{font-size:11px;color:var(--text2);line-height:1.5;padding:6px 8px;background:rgba(0,0,0,.2);border-radius:3px}
+.ag-metrics{display:flex;gap:12px;margin-top:8px}
+.ag-m{text-align:center}.ag-m .v{font-size:14px;font-weight:700;color:var(--cyan)}
+.ag-m .l{font-size:10px;color:var(--text3)}
+.tl-item{padding:5px 0;border-bottom:1px solid rgba(26,46,74,.4);font-size:11px;display:flex;gap:8px}
+.tl-time{color:var(--text3);width:36px}.tl-agent{color:var(--cyan);width:70px}.tl-msg{color:var(--text2)}
+.hof-item{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;margin-bottom:5px;cursor:pointer}
+.hof-item:hover{border-color:var(--lime)}.hof-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.r1{background:#ffd700;color:#000}.r2{background:#c0c0c0;color:#000}.r3{background:#cd7f32;color:#fff}
+.broker-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px}
+.broker-card.active-broker{border-color:var(--green2);background:rgba(0,161,82,.04)}
+.broker-card.offline{border-color:var(--border);opacity:.55}
+.broker-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.bm-item{text-align:center}.bm-v{font-size:16px;font-weight:700}.bm-l{font-size:10px;color:var(--text3)}
+.strat-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filter-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:11px;color:var(--text2);background:transparent}
+.filter-chip.active{background:var(--cyan);color:#000;border-color:var(--cyan)}
+.port-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.port-tab{padding:7px 16px;cursor:pointer;font-size:12px;color:var(--text3);border-bottom:2px solid transparent}
+.port-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.port-mode{display:none}.port-mode.active{display:block}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;width:640px;max-width:94vw;max-height:86vh;overflow-y:auto}
+.modal-box.wide{width:880px}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-hdr h3{font-size:14px;color:var(--cyan)}
+.modal-close{cursor:pointer;color:var(--text3);font-size:18px}.modal-close:hover{color:var(--text)}
+.modal-body{padding:16px 18px}.m-section{margin-bottom:14px}
+.m-section h4{font-size:12px;color:var(--lime);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.ai-fab{position:fixed;bottom:20px;right:20px;z-index:400;width:44px;height:44px;border-radius:50%;border:1px solid var(--cyan2);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,200,255,.25);color:var(--cyan);font-size:16px}
+.ai-fab.active{background:var(--cyan);color:#000;border-color:var(--cyan)}
+.ai-panel{position:fixed;bottom:72px;right:20px;z-index:399;width:380px;max-height:520px;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.6);display:none;flex-direction:column;overflow:hidden}
+.ai-panel.open{display:flex}
+.ai-panel-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg3)}
+.ai-logo{font-size:13px;font-weight:700;color:var(--cyan)}
+.ai-status{font-size:10px;color:var(--text3);margin-left:auto}
+.ai-messages{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:90%;padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5}
+.ai-msg.user{align-self:flex-end;background:rgba(0,200,255,.12);border:1px solid rgba(0,200,255,.2);color:var(--text)}
+.ai-msg.system{align-self:flex-start;background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.ai-input-row{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;background:var(--bg3)}
+.ai-inp{flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;color:var(--text);font-size:12px;outline:none}
+.ai-inp:focus{border-color:var(--cyan)}
+.ai-quick{padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-top:1px solid var(--border)}
+.ai-q-btn{font-size:10px;padding:3px 8px;border:1px solid var(--border2);border-radius:12px;cursor:pointer;color:var(--text3);background:transparent}
+.ai-q-btn:hover{border-color:var(--cyan2);color:var(--cyan)}
+.sep{border:none;border-top:1px solid var(--border);margin:10px 0}
+.tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600}
+.tag-mom{background:rgba(0,200,255,.12);color:var(--cyan)}
+.tag-mr{background:rgba(0,230,118,.12);color:var(--green)}
+.tag-ml{background:rgba(124,77,255,.12);color:var(--purple)}
+.tag-ev{background:rgba(255,179,0,.12);color:var(--amber)}
+.tag-drl{background:rgba(29,233,182,.12);color:var(--teal)}
+.tag-risk{background:rgba(255,61,87,.12);color:var(--red)}
+.cyan{color:var(--cyan)}.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--amber)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
+      <polygon points="14,2 26,9 26,21 14,28 2,21 2,9" fill="none" stroke="#00c8ff" stroke-width="1.2"/>
+      <polyline points="7,14 11,10 14,13 17,8 21,14" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="2.5" fill="#00c8ff" opacity=".35"/>
+    </svg>
+    <span class="logo-text">ALPHA-GENESIS<span class="logo-ver">V3.0</span></span>
+  </div>
+  <div class="tb-badge"><span class="tb-lbl">政权</span><span class="tb-val amber" id="tb-regime">震荡</span></div>
+  <div class="tb-badge"><span class="tb-lbl">DRL</span><span class="tb-val cyan" id="tb-drl">72%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">进化</span><span class="tb-val cyan" id="tb-gen">G42</span></div>
+  <div class="tb-badge"><span class="sdot on"></span><span class="tb-lbl">券商</span><span class="tb-val up" id="tb-broker">华泰</span></div>
+  <div class="tb-badge"><span class="tb-lbl">持仓</span><span class="tb-val" id="tb-pos">12</span></div>
+  <div class="tb-badge"><span class="tb-lbl">P&L</span><span class="tb-val up" id="tb-pnl">+2.34%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">信号</span><span class="tb-val cyan" id="tb-sig">7</span></div>
+  <div class="tb-badge"><span class="tb-lbl">沪指</span><span class="tb-val up" id="tb-sh">3284</span></div>
+  <span id="clock">--:--:--</span>
+</div>
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview"><i class="fa-solid fa-chart-line"></i>总览</button>
+    <button class="tab-btn" data-tab="positions"><i class="fa-solid fa-briefcase"></i>持仓</button>
+    <button class="tab-btn" data-tab="signals"><i class="fa-solid fa-satellite-dish"></i>信号</button>
+    <button class="tab-btn" data-tab="agents"><i class="fa-solid fa-robot"></i>智能体</button>
+    <button class="tab-btn" data-tab="strategy"><i class="fa-solid fa-brain"></i>策略库<span class="tab-badge">50+</span></button>
+    <button class="tab-btn" data-tab="portfolio"><i class="fa-solid fa-chart-pie"></i>组合构建</button>
+    <button class="tab-btn" data-tab="sentiment"><i class="fa-solid fa-newspaper"></i>舆情</button>
+    <button class="tab-btn" data-tab="drl"><i class="fa-solid fa-microchip"></i>DRL</button>
+    <button class="tab-btn" data-tab="risk"><i class="fa-solid fa-shield-halved"></i>风险</button>
+    <button class="tab-btn" data-tab="evolution"><i class="fa-solid fa-dna"></i>进化<span class="tab-badge" style="background:var(--amber);color:#000">G42</span></button>
+    <button class="tab-btn" data-tab="research"><i class="fa-solid fa-file-lines"></i>投研报告</button>
+    <button class="tab-btn" data-tab="broker"><i class="fa-solid fa-building-columns"></i>券商管理</button>
+    <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i>历史数据</button>
+    <button class="tab-btn" data-tab="live"><i class="fa-solid fa-bolt"></i>实盘操作<span class="tab-badge" style="background:var(--red)">LIVE</span></button>
+  </div>
+</div>
+<div class="main">
+  <div class="panel active" id="panel-overview">
+    <div class="g4" id="spark-row">
+      <div class="spark-card"><div class="spark-top"><span class="spark-name">上证综指</span><span class="card-badge cb-green">+0.82%</span></div><div class="spark-val up">3,284.5</div><div class="spark-canvas" style="height:48px"><canvas id="c-sh"></canvas></div></div>
+      <div class="spark-card"><div class="spark-top"><span class="spark-name">深证成指</span><span class="card-badge cb-red">-0.31%</span></div><div class="spark-val down">10,521</div><div class="spark-canvas" style="height:48px"><canvas id="c-sz"></canvas></div></div>
+      <div class="spark-card"><div class="spark-top"><span class="spark-name">创业板指</span><span class="card-badge cb-green">+1.24%</span></div><div class="spark-val up">2,134</div><div class="spark-canvas" style="height:48px"><canvas id="c-cy"></canvas></div></div>
+      <div class="spark-card"><div class="spark-top"><span class="spark-name">组合净值</span><span class="card-badge cb-cyan">+2.34%</span></div><div class="spark-val cyan">108.4</div><div class="spark-canvas" style="height:48px"><canvas id="c-pf"></canvas></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>60日净值对比</div></div><div class="ch ch-xl"><canvas id="c-equity"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>今日分钟P&L</div></div><div class="ch ch-xl"><canvas id="c-intraday"></canvas></div></div>
+    </div>
+    <div class="g3">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>A股行业热力图</div></div><div class="heat-grid" id="heat-grid"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-signal"></i>实时信号</div><span class="card-badge cb-cyan">7条</span></div><div class="ticker-wrap" id="sig-ticker">加载中...</div><hr class="sep"><div class="card-title" style="margin-bottom:8px"><i class="fa-solid fa-gauge-high"></i>系统快照</div><div class="kpi-grid" id="sys-snap"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>行业配置</div></div><div class="ch ch-md"><canvas id="c-sector-donut"></canvas></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-positions">
+    <div class="g2">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>当前持仓</div><span class="card-badge cb-cyan">A股 T+1</span></div><table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓</th><th>盈亏</th><th>盈亏率</th></tr></thead><tbody id="pos-tbody"></tbody></table></div>
+      <div><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>持仓行业分布</div></div><div class="ch ch-md"><canvas id="c-pos-sector"></canvas></div></div><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>个股盈亏贡献</div></div><div class="ch ch-md"><canvas id="c-stock-pnl"></canvas></div></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-signals">
+    <div class="g2">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-satellite-dish"></i>实时信号队列</div><span class="card-badge cb-amber" id="sig-pending">7条待处理</span></div><table class="tbl"><thead><tr><th>时间</th><th>代码</th><th>方向</th><th>价格</th><th>来源</th><th>类型</th><th>置信</th><th>状态</th><th>操作</th></tr></thead><tbody id="sig-tbody"></tbody></table></div>
+      <div><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>信号类型分布</div></div><div class="ch ch-md"><canvas id="c-sig-pie"></canvas></div></div><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>置信度分布</div></div><div class="ch ch-md"><canvas id="c-sig-conf"></canvas></div></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-agents">
+    <div class="ag-grid" id="ag-grid"></div>
+    <div class="g2" style="margin-top:8px">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-timeline"></i>Agent通信时间线</div></div><div id="ag-timeline" style="max-height:220px;overflow-y:auto"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>Agent任务负载</div></div><div class="ch ch-md"><canvas id="c-ag-load"></canvas></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-strategy">
+    <div class="card" style="margin-bottom:8px">
+      <div class="strat-filter"><span style="font-size:12px;color:var(--text2);font-weight:600">筛选:</span><span class="filter-chip active">全部</span><span class="filter-chip">动量</span><span class="filter-chip">均值回归</span><span class="filter-chip">机器学习</span><span class="filter-chip">事件驱动</span><span class="filter-chip">DRL进化</span><span style="margin-left:auto"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-download"></i>导出CSV</button></span></div>
+      <table class="tbl"><thead><tr><th>ID</th><th>类型</th><th>名称</th><th>适应度</th><th>收益</th><th>夏普</th><th>回撤</th><th>胜率</th><th>状态</th></tr></thead><tbody id="strat-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="panel" id="panel-portfolio">
+    <div class="port-tabs"><div class="port-tab active" data-port="ai">AI智能推荐</div><div class="port-tab" data-port="manual">手动构建</div><div class="port-tab" data-port="compare">方案对比</div></div>
+    <div class="port-mode active" id="port-ai"><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>AI推荐配置</div><span class="card-badge cb-green">震荡市</span></div><div class="ch ch-lg"><canvas id="c-ai-weights"></canvas></div></div></div>
+  </div>
+  <div class="panel" id="panel-sentiment"><div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>个股情绪矩阵</div></div><div class="heat-grid" id="sent-grid"></div></div></div>
+  <div class="panel" id="panel-drl">
+    <div class="g3">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-microchip"></i>Transformer-PPO V6.0</div></div><div style="font-size:12px;line-height:2.2"><div>政权感知: <span style="color:var(--green)">已启用</span></div><div>当前政权: <span style="color:var(--amber)">震荡市</span></div><div>年化回报: <span style="color:var(--green)">+18.4%</span></div><div>最新推理: <span style="color:var(--cyan)">72%</span>置信</div></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>政权概率</div></div><div class="ch ch-md"><canvas id="c-regime-prob"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>DRL置信度历史</div></div><div class="ch ch-md"><canvas id="c-drl-conf"></canvas></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-risk">
+    <div class="g4">
+      <div class="card clickable"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>VaR(95%)</div></div><div class="kpi"><div class="kpi-val up">1.84%</div><div class="kpi-lbl">点击查看明细</div></div></div>
+      <div class="card clickable"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>CVaR(95%)</div></div><div class="kpi"><div class="kpi-val neutral">2.31%</div><div class="kpi-lbl">条件风险</div></div></div>
+      <div class="card clickable"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-arrow-trend-down"></i>最大回撤</div></div><div class="kpi"><div class="kpi-val down">-8.4%</div><div class="kpi-lbl">近180日</div></div></div>
+      <div class="card clickable"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-gauge"></i>夏普比率</div></div><div class="kpi"><div class="kpi-val up">1.58</div><div class="kpi-lbl">近60日</div></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>风险来源分解</div></div><div class="ch ch-lg"><canvas id="c-risk-decomp"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>风险时间线</div></div><div class="ch ch-lg"><canvas id="c-risk-tl"></canvas></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-evolution">
+    <div class="g3">
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-users"></i>种群状态</div><span class="card-badge cb-cyan">第42代</span></div><div class="kpi-grid"><div class="kpi"><div class="kpi-val cyan">87</div><div class="kpi-lbl">活跃策略</div></div><div class="kpi"><div class="kpi-val" style="color:var(--text3)">234</div><div class="kpi-lbl">墓地策略</div></div><div class="kpi"><div class="kpi-val up">9.24</div><div class="kpi-lbl">最高适应度</div></div><div class="kpi"><div class="kpi-val neutral">5.81</div><div class="kpi-lbl">平均适应度</div></div></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>适应度分布</div></div><div class="ch ch-md"><canvas id="c-fit-dist"></canvas></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>代际进化</div></div><div class="ch ch-md"><canvas id="c-evo-curve"></canvas></div></div>
+    </div>
+  </div>
+  <div class="panel" id="panel-research"><div class="card"><div class="card-title"><i class="fa-solid fa-file-lines"></i>报告库</div><div style="color:var(--text3);text-align:center;padding:40px">点击上方按钮生成投研报告</div></div></div>
+  <div class="panel" id="panel-broker">
+    <div class="card"><div class="card-title"><i class="fa-solid fa-building-columns"></i>券商管理</div><div style="color:var(--text3);text-align:center;padding:40px">券商管理面板内容</div></div>
+  </div>
+  <div class="panel" id="panel-history">
+    <div class="card"><div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i>历史数据</div><div style="color:var(--text3);text-align:center;padding:40px">历史数据查询面板</div></div>
+  </div>
+  <div class="panel" id="panel-live">
+    <div class="card"><div class="card-title"><i class="fa-solid fa-bolt"></i>实盘操作</div><div style="color:var(--text3);text-align:center;padding:40px">实盘操作面板内容</div></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-drill"><div class="modal-box"><div class="modal-hdr"><h3>详情</h3><span class="modal-close" onclick="closeModal('modal-drill')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="drill-body"></div></div></div>
+<div class="ai-fab" id="ai-fab" onclick="toggleAI()"><i class="fa-solid fa-comment-dots"></i></div>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-hdr"><i class="fa-solid fa-robot" style="color:var(--cyan)"></i><span class="ai-logo">Alpha-AI 指令中枢</span><span class="ai-status">就绪 · 8个Agent在线</span></div>
+  <div class="ai-messages" id="ai-messages"><div class="ai-msg system"><b>Alpha-AI:</b> 您好，我是Alpha量化系统指令中枢。您可以用自然语言向我发送指令。</div></div>
+  <div class="ai-quick"><button class="ai-q-btn">查看风险</button><button class="ai-q-btn">最优券商</button><button class="ai-q-btn">生成晨报</button></div>
+  <div class="ai-input-row"><input class="ai-inp" id="ai-inp" placeholder="输入指令..." onkeydown="if(event.key==='Enter')sendAI()"><button class="btn btn-primary btn-sm" onclick="sendAI()"><i class="fa-solid fa-paper-plane"></i></button></div>
+</div>
+<script>
+const S={positions:[{c:'600519',n:'贵州茅台',cost:1890.5,price:1924.3,qty:50,sector:'白酒'},{c:'000858',n:'五粮液',cost:142.3,price:145.7,qty:200,sector:'白酒'},{c:'601318',n:'中国平安',cost:17.80,price:18.34,qty:5000,sector:'保险'},{c:'300750',n:'宁德时代',cost:287.4,price:294.1,qty:300,sector:'新能源'},{c:'600036',n:'招商银行',cost:29.45,price:30.12,qty:10000,sector:'银行'}],signals:[{t:'09:45',c:'600519',n:'贵州茅台',dir:'BUY',price:1924.30,conf:92,src:'DRL+Evolution',type:'drl',status:'pending'},{t:'10:12',c:'000858',n:'五粮液',dir:'ADD',price:145.67,conf:87,src:'Sentiment',type:'event',status:'pending'},{t:'10:58',c:'300750',n:'宁德时代',dir:'SELL',price:294.12,conf:78,src:'Strategy',type:'momentum',status:'pending'},{t:'11:34',c:'600036',n:'招商银行',dir:'TAKE',price:30.12,conf:85,src:'Guard',type:'risk',status:'confirmed'}],chartsInit:{}};
+function switchTab(name,el){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));const panel=document.getElementById('panel-'+name);if(panel)panel.classList.add('active');if(el)el.classList.add('active');if(!S.chartsInit[name]){S.chartsInit[name]=true;initCharts(name);}}
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.getAttribute('data-tab'),btn)));
+function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' CST';}
+setInterval(updateClock,1000);updateClock();
+function renderPositions(){const tb=document.getElementById('pos-tbody');if(!tb)return;tb.innerHTML=S.positions.map(p=>{const pnl=(p.price-p.cost)*p.qty;const rate=((p.price-p.cost)/p.cost*100).toFixed(2);return`<tr><td class="cyan">${p.c}</td><td>${p.n}</td><td>${p.cost.toFixed(2)}</td><td>${p.price.toFixed(2)}</td><td>${p.qty.toLocaleString()}</td><td class="${pnl>=0?'up':'down'}">¥${pnl.toFixed(0)}</td><td class="${rate>=0?'up':'down'}">${rate>=0?'+':''}${rate}%</td></tr>`;}).join('');}
+function renderSignals(){const tb=document.getElementById('sig-tbody');if(!tb)return;tb.innerHTML=S.signals.map(s=>`<tr><td class="neutral">${s.t}</td><td><span class="cyan">${s.c}</span><br><span style="font-size:10px;color:var(--text3)">${s.n}</span></td><td class="${s.dir==='BUY'||s.dir==='ADD'?'up':'down'}" style="font-weight:600">${s.dir}</td><td>¥${s.price.toFixed(2)}</td><td style="font-size:10px;color:var(--text3)">${s.src}</td><td><span class="tag tag-${s.type==='drl'?'drl':s.type==='event'?'ev':'mom'}">${s.type}</span></td><td><div class="pbar" style="width:60px"><div class="pfill" style="width:${s.conf}%;background:${s.conf>85?'var(--green)':'var(--amber)'}"></div></div>${s.conf}%</td><td><span class="${s.status==='confirmed'?'up':'neutral'}">${s.status==='confirmed'?'✓已确认':'⏳待处理'}</span></td><td><button class="btn btn-primary btn-xs">执行</button></td></tr>`).join('');}
+function renderAgents(){const el=document.getElementById('ag-grid');if(!el)return;const agents=[{n:'Chief',r:'决策',i:'fa-crown',s:'thinking'},{n:'Scout',r:'扫描',i:'fa-telescope',s:'on'},{n:'Picker',r:'筛选',i:'fa-bullseye',s:'on'},{n:'Guard',r:'风控',i:'fa-shield-halved',s:'on'},{n:'Trader',r:'执行',i:'fa-bolt',s:'on'},{n:'Review',r:'复盘',i:'fa-chart-bar',s:'off'},{n:'DRL',r:'深度学习',i:'fa-microchip',s:'on'},{n:'Sentiment',r:'舆情',i:'fa-newspaper',s:'thinking'}];el.innerHTML=agents.map(a=>`<div class="ag-card ${a.s==='on'?'active':a.s==='thinking'?'thinking':''}"><div class="ag-header"><div class="ag-icon" style="background:rgba(0,200,255,.1)"><i class="fa-solid ${a.i}" style="color:${a.s==='on'?'var(--green)':a.s==='thinking'?'var(--amber)':'var(--text3)'}"></i></div><div style="flex:1"><div class="ag-name">${a.n} Agent</div><div class="ag-role">${a.r}</div></div><span class="sdot ${a.s}"></span></div><div class="ag-msg">运行正常</div><div class="ag-metrics"><div class="ag-m"><div class="v">${Math.floor(Math.random()*20)}</div><div class="l">任务</div></div><div class="ag-m"><div class="v">${90+Math.floor(Math.random()*10)}%</div><div class="l">健康</div></div></div></div>`).join('');}
+function renderHeatGrid(){const el=document.getElementById('heat-grid');if(!el)return;const sectors=[{n:'银行',p:2.34},{n:'白酒',p:4.56},{n:'医药',p:-1.23},{n:'新能源',p:-2.45},{n:'芯片',p:3.67},{n:'电力',p:1.23},{n:'家电',p:-0.45},{n:'地产',p:-3.45},{n:'消费',p:2.15},{n:'安防',p:1.56}];el.innerHTML=sectors.map(s=>{const a=Math.min(0.9,Math.abs(s.p)/5*0.8+0.2);const bg=s.p>0?`rgba(0,230,118,${a})`:`rgba(255,61,87,${a})`;return`<div class="heat-cell" style="background:${bg};color:#fff"><div class="hc-name">${s.n}</div><div class="hc-val">${s.p>0?'+':''}${s.p}%</div></div>`;}).join('');}
+function renderSentiment(){const el=document.getElementById('sent-grid');if(!el)return;const s=[{n:'茅台',p:78},{n:'五粮液',p:72},{n:'宁德',p:65},{n:'平安',p:58},{n:'招行',p:55},{n:'海康',p:48},{n:'中芯',p:42},{n:'长电',p:68},{n:'兴业',p:52},{n:'美的',p:61}];el.innerHTML=s.map(x=>{const bg=x.p>=65?'rgba(0,230,118,.07)':x.p>=50?'rgba(255,179,0,.07)':'rgba(255,61,87,.07)';const c=x.p>=65?'var(--green)':x.p>=50?'var(--amber)':'var(--red)';return`<div class="heat-cell" style="background:${bg};border:1px solid var(--border)"><div class="hc-name" style="font-size:10px;color:var(--text3)">${x.n}</div><div class="hc-val" style="color:${c};font-size:14px">${x.p}</div></div>`;}).join('');}
+function renderSysSnap(){const el=document.getElementById('sys-snap');if(!el)return;el.innerHTML=[{l:'VaR',v:'1.84%'},{l:'夏普',v:'1.58'},{l:'回撤',v:'-8.4%'},{l:'Alpha',v:'+2.34%'}].map(m=>`<div class="kpi"><div class="kpi-val">${m.v}</div><div class="kpi-lbl">${m.l}</div></div>`).join('');}
+function renderSigTicker(){const el=document.getElementById('sig-ticker');if(!el)return;el.innerHTML=S.signals.map(s=>`<span class="ticker-item"><span class="cyan">${s.c}</span> <span class="${s.dir==='BUY'||s.dir==='ADD'?'up':'down'}">${s.dir}</span> @${s.price.toFixed(2)} (${s.conf}%)</span>`).join('');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toggleAI(){const p=document.getElementById('ai-panel');const f=document.getElementById('ai-fab');p.classList.toggle('open');f.classList.toggle('active');}
+function sendAI(){const inp=document.getElementById('ai-inp');if(!inp||!inp.value.trim())return;const msgs=document.getElementById('ai-messages');msgs.innerHTML+=`<div class="ai-msg user">${inp.value}</div><div class="ai-msg system">收到指令：${inp.value}</div>`;inp.value='';msgs.scrollTop=msgs.scrollHeight;}
+function initCharts(name){const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a9ab5',font:{size:10}}}},scales:{x:{grid:{color:'#1a2e4a'},ticks:{color:'#516478',font:{size:9}}},y:{grid:{color:'#1a2e4a'},ticks:{color:'#516478',font:{size:9}}}}};if(name==='overview'){new Chart(document.getElementById('c-sh'),{type:'line',data:{labels:[1,2,3,4,5,6,7,8,9,10],datasets:[{data:[3246,3254,3261,3265,3270,3278,3280,3278,3282,3284],borderColor:'#00c8ff',borderWidth:1.5,pointRadius:0,tension:0.4}]},options:{...opts,plugins:{legend:{display:false}}}});new Chart(document.getElementById('c-equity'),{type:'line',data:{labels:['T-60','T-50','T-40','T-30','T-20','T-10','T-5','Today'],datasets:[{label:'组合净值',data:[102,103,104,105,106,107,108,108.4],borderColor:'#00c8ff',backgroundColor:'rgba(0,200,255,0.1)',fill:true,tension:0.4},{label:'沪深300',data:[100,101,102,103,104,105,105.5,105.8],borderColor:'#ffb300',borderDash:[5,5],tension:0.4}]},options:opts});new Chart(document.getElementById('c-intraday'),{type:'bar',data:{labels:['09:30','10:00','10:30','11:00','11:30','13:30','14:00','14:30','15:00'],datasets:[{data:[-0.5,1.2,0.8,-0.3,0.5,1.5,0.9,-0.2,1.0],backgroundColor:(ctx)=>ctx.raw>=0?'#00e676':'#ff3d57'}]},options:{...opts,plugins:{legend:{display:false}}}});new Chart(document.getElementById('c-sector-donut'),{type:'doughnut',data:{labels:['白酒','银行','新能源','科技','医药','其他'],datasets:[{data:[25,20,15,15,12,13],backgroundColor:['#00c8ff','#00e676','#ffb300','#7c4dff','#ff3d57','#516478']}]},options:{...opts,cutout:'60%'}});}}
+function tick(){['sh','sz','cy','pf'].forEach(k=>{const el=document.getElementById(k+'-val');if(el){const chg=(Math.random()-.5)*.2;const base=parseFloat(el.textContent.replace(/,/g,''));const nv=base*(1+chg/100);el.textContent=nv.toLocaleString('en',{maximumFractionDigits:1});}});}
+setInterval(tick,2500);
+renderPositions();renderSignals();renderAgents();renderHeatGrid();renderSentiment();renderSysSnap();renderSigTicker();
+initCharts('overview');
+</script>
+</body>
+</html>

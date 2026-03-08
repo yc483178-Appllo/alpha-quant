@@ -1,0 +1,28 @@
+{
+    auto_https off
+}
+
+http://dengdeng-trading.com, http://www.dengdeng-trading.com, http://120.76.55.222 {
+    root * /opt/alpha
+    
+    # 设置默认首页
+    file_server {
+        index Alpha量化看板V3.0.html
+    }
+    
+    # 首页重定向
+    handle / {
+        rewrite * /Alpha量化看板V3.0.html
+        file_server
+    }
+    
+    # API 代理
+    handle /api/* {
+        reverse_proxy localhost:8765
+    }
+    
+    # 静态文件
+    handle {
+        file_server
+    }
+}
