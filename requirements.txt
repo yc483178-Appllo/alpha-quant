@@ -1,0 +1,68 @@
+# Kimi Claw V7.0 完整依赖列表
+# 安装: pip install -r requirements.txt
+
+# === Web框架 ===
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# === 配置管理 ===
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# === 数据库 ===
+clickhouse-driver==0.2.6
+asyncpg==0.29.0
+redis==5.0.1
+
+# === 数据处理 ===
+numpy==1.26.2
+pandas==2.1.4
+scipy==1.11.4
+
+# === 机器学习 ===
+scikit-learn==1.3.2
+xgboost==2.0.2
+lightgbm==4.1.0
+
+# === 深度学习 (DRL) ===
+torch==2.1.1
+torch-geometric==2.4.0
+transformers==4.36.0
+stable-baselines3==2.2.1
+
+# === 遗传规划 ===
+deap==1.4.1
+
+# === AutoML ===
+optuna==3.4.0
+
+# === 统计模型 ===
+statsmodels==0.14.1
+hmmlearn==0.3.0
+
+# === 因果推断 ===
+dowhy==0.11
+
+# === 图神经网络 ===
+networkx==3.2.1
+
+# === 数据API ===
+tushare==1.2.89
+jqdatasdk==1.9.1
+baostock==0.8.9
+
+# === 消息队列 ===
+kafka-python==2.0.2
+aiokafka==0.9.0
+
+# === 定时任务 ===
+apscheduler==3.10.4
+
+# === PDF导出 ===
+weasyprint==60.2
+
+# === 工具库 ===
+loguru==0.7.2
+pyyaml==6.0.1
