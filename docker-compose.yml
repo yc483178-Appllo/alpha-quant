@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  kimiclaw-v8:
+    build: .
+    container_name: kimiclaw-v8
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=false
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - TUSHARE_TOKEN=${TUSHARE_TOKEN}
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - GLM_API_KEY=${GLM_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - kimiclaw-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kimiclaw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - kimiclaw-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kimiclaw-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - kimiclaw-network
+
+volumes:
+  redis-data:
+  prometheus-data:
+
+networks:
+  kimiclaw-network:
+    driver: bridge

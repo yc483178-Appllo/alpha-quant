@@ -1,0 +1,22 @@
+INFO:     Started server process [45545]
+INFO:     Waiting for application startup.
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO - 🚀 Initializing KimiClaw V8.0...
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO -    Version: 8.0.0
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO -    Debug: False
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  AI Gateway not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Agent System not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Backtest Engine not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Execution Engine not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Compliance Engine not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Factor Lifecycle not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Risk Engine not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Advanced Tech not available
+2026-03-14 18:17:08 - kimiclaw_v8 - WARNING -   ⚠️  Observability not available
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO -   💾 [10/10] Data Gateway ready (integrated)
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO - ✅ KimiClaw V8.0 initialized successfully!
+2026-03-14 18:17:08 - kimiclaw_v8 - INFO -    Active subsystems: 1/10
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49854 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56874 - "GET /api/v8/data/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56888 - "GET /api/v8/data/sources HTTP/1.1" 200 OK

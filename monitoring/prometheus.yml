@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'kimiclaw-v8'
+    static_configs:
+      - targets: ['kimiclaw-v8:8000']
+    metrics_path: /metrics
+    scrape_interval: 5s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
