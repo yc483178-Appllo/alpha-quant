@@ -25,8 +25,10 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
+          echo "Key file created"
+          head -1 /tmp/deploy_key
 
-      - name: 📥 测试 SSH 连接
+      - name: 📥 测试 SSH 连接（详细输出）
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.ALPACA_HOST }}
@@ -34,11 +36,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command_timeout: 30
+          debug: true
           script: |
-            echo "✅ SSH 连接成功!"
+            echo "Connected!"
             whoami
-            pwd
-            ls -la /home/admin/ 2>/dev/null || echo "No /home/admin"
 
       - name: 📤 部署完成
         run: |
