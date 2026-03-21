@@ -6,21 +6,8 @@ on:
       - master
       - main
   workflow_dispatch:
-    inputs:
-      deploy_mode:
-        description: '部署模式'
-        required: false
-        default: 'full'
-        type: choice
-        options:
-          - full
-          - code-only
-          - restart
 
 jobs:
-  # ============================================
-  # 作业 1: 拉取代码到阿里云并重启服务
-  # ============================================
   deploy:
     name: 🚀 部署到阿里云
     runs-on: ubuntu-latest
@@ -30,10 +17,6 @@ jobs:
         run: |
           echo "=========================================="
           echo "🚀 Alpha Quant 部署开始"
-          echo "📦 分支: ${{ github.ref_name }}"
-          echo "🔖 Commit: ${{ github.sha }}"
-          echo "👤 作者: ${{ github.actor }}"
-          echo "⏰ 时间: $(date '+%Y-%m-%d %H:%M:%S')"
           echo "=========================================="
 
       - name: 🔐 配置 SSH 密钥
@@ -43,78 +26,22 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
 
-      - name: 📥 代码同步到阿里云
+      - name: 📥 测试 SSH 连接
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.ALPACA_HOST }}
           username: ${{ secrets.ALPACA_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command_timeout: 300
+          command_timeout: 30
           script: |
-            # 进入项目目录
-            cd /opt/alpha
-            
-            # 显示当前状态
-            echo "📍 当前目录: $(pwd)"
-            echo "📋 Git 状态:"
-            git status 2>/dev/null || echo "Not a git repo"
-            
-            # 拉取最新代码
-            echo "🔄 正在拉取最新代码..."
-            git fetch origin
-            git checkout ${{ github.ref_name }}
-            git pull origin ${{ github.ref_name }}
-            
-            # 显示最新版本
-            echo "📌 最新 Commit:"
-            git log -1 --oneline
-            
-            # 安装依赖
-            echo "📦 安装依赖..."
-            pip3 install -r requirements.txt --quiet --break-system-packages 2>/dev/null || true
-            
-            # 重启服务
-            echo "🔄 重启服务..."
-            if pgrep -f "gunicorn" > /dev/null; then
-              pkill -f gunicorn || true
-              sleep 2
-            fi
-            
-            # 尝试使用 supervisor 或 systemd
-            sudo systemctl restart alpha-quant 2>/dev/null || \
-            sudo supervisorctl restart alpha-quant 2>/dev/null || \
-            (nohup python3 dashboard.py > /tmp/alpha.log 2>&1 &)
-            
-            sleep 3
-            
-            # 检查服务状态
-            echo "📊 服务状态:"
-            if pgrep -f "dashboard.py" > /dev/null; then
-              echo "  ✅ 服务运行中"
-            else
-              echo "  ⚠️ 服务未运行，请检查日志"
-              tail -20 /tmp/alpha.log 2>/dev/null || true
-            fi
-            
-            echo "=========================================="
-            echo "✅ 部署完成!"
-            echo "=========================================="
+            echo "✅ SSH 连接成功!"
+            whoami
+            pwd
+            ls -la /home/admin/ 2>/dev/null || echo "No /home/admin"
 
-  # ============================================
-  # 作业 2: 发送部署通知
-  # ============================================
-  notify:
-    name: 📬 部署通知
-    runs-on: ubuntu-latest
-    needs: deploy
-    
-    steps:
-      - name: 📤 部署完成通知
+      - name: 📤 部署完成
         run: |
           echo "=========================================="
-          echo "🎉 Alpha Quant 部署成功!"
-          echo "🌐 访问地址: https://dengdeng-trading.com"
-          echo "⏰ 部署时间: $(date '+%Y-%m-%d %H:%M:%S')"
-          echo "🔖 Commit: ${{ github.sha }}"
+          echo "🎉 部署测试成功!"
           echo "=========================================="
