@@ -17,11 +17,6 @@ on:
           - code-only
           - restart
 
-env:
-  ALPACA_HOST: ${{ secrets.ALPACA_HOST }}
-  ALPACA_USER: ${{ secrets.ALPACA_USER }}
-  ALPACA_PASSWORD: ${{ secrets.ALPACA_PASSWORD }}
-
 jobs:
   # ============================================
   # 作业 1: 拉取代码到阿里云并重启服务
@@ -41,15 +36,21 @@ jobs:
           echo "⏰ 时间: $(date '+%Y-%m-%d %H:%M:%S')"
           echo "=========================================="
 
+      - name: 🔐 配置 SSH 密钥
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
       - name: 📥 代码同步到阿里云
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.ALPACA_HOST }}
           username: ${{ secrets.ALPACA_USER }}
-          password: ${{ secrets.ALPACA_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command_timeout: 300
-          envs: MAIN_PID
           script: |
             # 进入项目目录
             cd /opt/alpha
@@ -69,47 +70,22 @@ jobs:
             echo "📌 最新 Commit:"
             git log -1 --oneline
             
-            # 根据部署模式执行不同操作
-            DEPLOY_MODE="${DEPLOY_MODE:-full}"
-            echo "⚙️ 部署模式: $DEPLOY_MODE"
-            
-            case "$DEPLOY_MODE" in
-              full)
-                echo "🔨 执行完整部署..."
-                ;;
-              code-only)
-                echo "📝 仅更新代码..."
-                ;;
-              restart)
-                echo "🔄 仅重启服务..."
-                ;;
-            esac
-            
-            # 检查 Python 环境
-            echo "🐍 Python 版本:"
-            python3 --version
-            
             # 安装依赖
             echo "📦 安装依赖..."
             pip3 install -r requirements.txt --quiet --break-system-packages 2>/dev/null || true
             
             # 重启服务
             echo "🔄 重启服务..."
-            
-            # 重启 Gunicorn
             if pgrep -f "gunicorn" > /dev/null; then
-              echo "  → 停止现有 Gunicorn..."
               pkill -f gunicorn || true
               sleep 2
             fi
             
-            # 重启主服务 (假设使用 systemd 或 supervisor)
-            echo "  → 启动服务..."
+            # 尝试使用 supervisor 或 systemd
             sudo systemctl restart alpha-quant 2>/dev/null || \
             sudo supervisorctl restart alpha-quant 2>/dev/null || \
             (nohup python3 dashboard.py > /tmp/alpha.log 2>&1 &)
             
-            # 等待服务启动
             sleep 3
             
             # 检查服务状态
@@ -126,44 +102,12 @@ jobs:
             echo "=========================================="
 
   # ============================================
-  # 作业 2: 部署前端静态文件
-  # ============================================
-  deploy-frontend:
-    name: 🌐 部署前端
-    runs-on: ubuntu-latest
-    needs: deploy
-    
-    steps:
-      - name: 🚚 部署前端文件
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.ALPACA_HOST }}
-          username: ${{ secrets.ALPACA_USER }}
-          password: ${{ secrets.ALPACA_PASSWORD }}
-          port: 22
-          command_timeout: 60
-          script: |
-            echo "📦 同步前端文件..."
-            cd /opt/alpha
-            
-            # 前端文件目录
-            FRONTEND_DIR="/opt/alpha"
-            
-            # 检查是否有 Caddy
-            if command -v caddy &> /dev/null; then
-              echo "  → 重载 Caddy 配置..."
-              sudo systemctl reload caddy 2>/dev/null || true
-            fi
-            
-            echo "✅ 前端部署完成"
-
-  # ============================================
-  # 作业 3: 发送部署通知
+  # 作业 2: 发送部署通知
   # ============================================
   notify:
     name: 📬 部署通知
     runs-on: ubuntu-latest
-    needs: [deploy, deploy-frontend]
+    needs: deploy
     
     steps:
       - name: 📤 部署完成通知
