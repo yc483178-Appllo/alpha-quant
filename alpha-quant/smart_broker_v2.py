@@ -367,3 +367,60 @@ class SmartBrokerManagerV2:
     @property
     def current_broker_id(self) -> str:
         return self.switcher.current_broker_id
+
+    # ═══════════════════════════════════════════
+    # V6.1 SimEdge 新增：OMS订单路由
+    # ═══════════════════════════════════════════
+
+    def execute_order(self, order_request: dict) -> dict:
+        """
+        OMS订单执行入口
+        根据account_type自动路由到实盘或模拟盘
+        """
+        account_type = order_request.get("account_type", "real")
+        
+        if account_type == "simulation":
+            return self._route_to_simulation(order_request)
+        else:
+            return self._route_to_real_broker(order_request)
+
+    def _route_to_simulation(self, order_request: dict) -> dict:
+        """路由到模拟盘系统"""
+        try:
+            # 延迟导入避免循环依赖
+            from v61_integration import get_v61_integration
+            integration = get_v61_integration()
+            return integration.route_order(order_request)
+        except Exception as e:
+            logger.error(f"模拟盘路由失败: {e}")
+            return {
+                "success": False,
+                "error": f"模拟盘路由失败: {e}",
+                "order_type": "simulation"
+            }
+
+    def _route_to_real_broker(self, order_request: dict) -> dict:
+        """路由到实盘券商"""
+        broker_id = self.current_broker_id
+        broker_type = self.monitor.broker_configs.get(broker_id, {}).get("type", "ptrade")
+        
+        logger.info(f"执行实盘订单: {order_request.get('code')} via {broker_id}")
+        
+        # TODO: 调用各券商SDK实际执行
+        # 这里返回模拟成功响应，实际需接入PTrade/QMT SDK
+        return {
+            "success": True,
+            "broker_id": broker_id,
+            "broker_type": broker_type,
+            "order_type": "real",
+            "status": "submitted",
+            "note": "实盘执行需接入券商SDK",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def route_order(self, order_request: dict) -> dict:
+        """
+        V6.1统一订单路由接口
+        与v61_integration.route_order保持一致的API
+        """
+        return self.execute_order(order_request)

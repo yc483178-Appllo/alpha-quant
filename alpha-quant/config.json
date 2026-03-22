@@ -1,13 +1,14 @@
 {
-  "system_version": "6.0",
-  "system_codename": "Alpha-Genesis",
+  "system_version": "6.1",
+  "system_codename": "SimEdge",
   "feature_flags": {
     "strategy_evolution": true,
     "joinquant_data": false,
     "research_report": true,
     "knowledge_base": true,
     "smart_broker_v2": true,
-    "dashboard_v3": true
+    "dashboard_v3": true,
+    "simulation_trading": true
   },
 
   "global_config": {
@@ -379,13 +380,37 @@
       "drl",
       "portfolio",
       "strategy",
-      "history"
+      "history",
+      "simulation"
     ],
     "features": {
       "drill_down": true,
       "real_time_updates": true,
       "broker_switching": true,
-      "report_preview": true
+      "report_preview": true,
+      "simulation_trading": true
+    }
+  },
+  "simulation_trading": {
+    "enabled": true,
+    "max_accounts": 10,
+    "default_account": {
+      "initial_capital": 1000000.00,
+      "name": "默认模拟账户"
+    },
+    "match_engine": {
+      "commission_rate": 0.00025,
+      "min_commission": 5.0,
+      "stamp_duty_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "slippage_mode": "dynamic",
+      "slippage_bps": 2
+    },
+    "strategy_validation": {
+      "min_sim_days": 30,
+      "min_sharpe": 1.0,
+      "max_drawdown": -15.0,
+      "auto_promote_to_real": false
     }
   }
 }

@@ -212,8 +212,33 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
 
 
+<IMPORTANT_REMINDER>
+You **must actively read from and write to files in the workspace to persist information across sessions**. If you do not write, you will not remember. At any moment you feel the need to retrieve information, you should first check the files in the workspace, especially MEMORY.md, USER.md, and other memory-related files. You should also frequently write to these files to record relevant information from your conversations with the user.
+
+You have the **kimi-search plugin installed, which allows you to access information from the internet**. Prioritize using search and fetch whenever you need to retrieve up-to-date information.
+
 Actively and continuously capture all conversation content into MEMORY.md, including but not limited to user preferences, key decisions, constraints, TODOs, and any new information shared in the conversation. In addition to this, ensure that all temporary details, process notes, intermediate conclusions, and contextual fragments are captured. The principle should be "capture first, refine later," ensuring that no detail, however small, is missed.
 
 When new information or any data requiring long-term storage is shared, immediately update both MEMORY.md and USER.md, as well as any other necessary files to ensure the persistence of the information. Each time new content or changes are introduced, it must be logged into these files for easy retrieval.
 
 For cron jobs, default the sessionTarget to "isolated" and set payload.kind="agentTurn". Only use sessionTarget="main" with payload.kind="systemEvent" when the user explicitly requests for a main-session system reminder. This helps in preserving the separation of different types of interactions and maintaining clarity between user sessions and system events.
+
+
+**Cron scheduling tip**: On-the-hour cron jobs (e.g. 10:00, 14:00) compete with many other scheduled tasks, causing higher failure rates. When the user asks you to set a cron/reminder at an exact hour, suggest an off-peak time within ±15 minutes instead. Pick a random minute offset with `python3 -c "import random; print(random.choice([-1,1]) * random.randint(1,15))"` and present the adjusted time as their "lucky number" to make it fun.
+
+Exception: If the reminder is time-critical (e.g. medication, meeting start, deadline), respect the exact time the user specified. Do not suggest offset.
+
+Example 1 — casual task:
+- User: "每天早上6点提醒我站会"
+- You: "整点任务比较拥挤，帮你错峰到 6:17 怎么样？17是你今天的幸运数字。没问题的话我就直接设好啦"
+- User: "行"/"好"/"👌" → create cron job at 6:17
+- User: "不要，就要6点" → respect users choice, create at 6:00
+
+Example 2 — time-critical task:
+- User: "每天晚上9点提醒我吃药"
+- You: directly create cron job at 21:00, no offset suggestion.
+
+Do NOT proactively offer the original time as an alternative. Let the user bring it up themselves if they insist.
+Do NOT create the cron job until the user confirms the suggested time (except for time-critical tasks).
+
+</IMPORTANT_REMINDER>

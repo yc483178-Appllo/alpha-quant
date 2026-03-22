@@ -190,6 +190,92 @@ class StrategyPopulation:
             "metrics": metrics
         })
     
+    # ═══════════════════════════════════════════════════════════
+    # V6.1 SimEdge 新增：三阶段加权适应度计算
+    # ═══════════════════════════════════════════════════════════
+    
+    def calc_fitness_v2(self, backtest_perf: Dict, sim_perf: Dict = None, real_perf: Dict = None) -> float:
+        """
+        三阶段加权适应度计算
+        
+        权重分配：
+        - 回测绩效: 30%
+        - 模拟盘绩效: 40%
+        - 实盘绩效: 30%
+        
+        Args:
+            backtest_perf: 回测绩效指标 {"sharpe": float, "annual_return": float, ...}
+            sim_perf: 模拟盘绩效指标 (可选)
+            real_perf: 实盘绩效指标 (可选)
+        
+        Returns:
+            加权适应度评分
+        """
+        # 回测权重 30%
+        score = backtest_perf.get("sharpe", 0) * 0.3
+        
+        # 模拟盘权重 40%
+        if sim_perf:
+            sim_sharpe = sim_perf.get("sharpe", 0)
+            score += sim_sharpe * 0.4
+        
+        # 实盘权重 30%
+        if real_perf:
+            real_sharpe = real_perf.get("sharpe", 0)
+            score += real_sharpe * 0.3
+        
+        return round(score, 2)
+    
+    def evaluate_fitness_v61(self, dna: StrategyDNA, 
+                             backtest_metrics: Dict,
+                             sim_account_id: str = None,
+                             v61_integration = None):
+        """
+        V6.1 增强版适应度评估
+        整合回测、模拟盘、实盘三阶段绩效
+        
+        Args:
+            dna: 策略DNA
+            backtest_metrics: 回测指标
+            sim_account_id: 模拟账户ID（可选）
+            v61_integration: V6.1集成系统实例（可选）
+        """
+        # 获取模拟盘绩效
+        sim_perf = None
+        if sim_account_id and v61_integration:
+            try:
+                sim_perf = v61_integration.get_strategy_performance(dna.id)
+            except Exception as e:
+                logger.warning(f"获取模拟盘绩效失败 {dna.id}: {e}")
+        
+        # TODO: 获取实盘绩效（需要从实盘系统对接）
+        real_perf = None
+        
+        # 计算三阶段加权适应度
+        fitness_score = self.calc_fitness_v2(backtest_metrics, sim_perf, real_perf)
+        
+        # 剔除无效策略
+        if backtest_metrics.get("num_trades", 0) < 10:
+            dna.fitness_score = -999.0
+        else:
+            dna.fitness_score = fitness_score
+        
+        # 记录完整历史
+        dna.performance_history.append({
+            "date": datetime.now().isoformat(),
+            "generation": self.generation,
+            "fitness": dna.fitness_score,
+            "backtest_metrics": backtest_metrics,
+            "simulation_metrics": sim_perf,
+            "real_metrics": real_perf,
+            "calc_method": "v61_weighted"  # 标记为V6.1加权计算
+        })
+        
+        logger.debug(f"策略 {dna.id} V6.1适应度: {fitness_score} | "
+                    f"回测:{backtest_metrics.get('sharpe', 0):.2f} | "
+                    f"模拟:{sim_perf.get('sharpe', 0) if sim_perf else 'N/A'} | "
+                    f"实盘:{real_perf.get('sharpe', 0) if real_perf else 'N/A'}")
+    
     def tournament_select(self, tournament_size: int = 5, n: int = 10) -> List[StrategyDNA]:
         """锦标赛选择：随机选k个，取最优，重复n次"""
         selected = []

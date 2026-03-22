@@ -1,0 +1,816 @@
+<!--
+Alpha-Genesis V6.1 SimEdge - 看板 V3.1 前端增强
+=================================================
+新增UI组件：
+1. 模拟盘面板（第15个Tab）
+2. 实盘/模拟切换开关
+3. 模拟盘净值曲线
+4. 数据筛选器
+5. 模拟盘状态徽章
+
+将此文件内容合并到 index.html 的合适位置
+-->
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 5: 模拟盘状态徽章（Topbar） -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="simulation-badge-template">
+<div id="simulation-status-badge" class="simulation-badge" style="
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: {{bg_color}};
+    border: 1px solid {{border_color}};
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+" title="{{tooltip}}">
+    <span class="status-dot" style="
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: {{badge_color}};
+        animation: pulse 2s infinite;
+    "></span>
+    <span class="badge-text" style="
+        font-size: 12px;
+        color: {{badge_color}};
+        font-weight: 500;
+    ">{{text}}</span>
+</div>
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .simulation-badge:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(114, 46, 209, 0.2);
+    }
+</style>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 2: 实盘/模拟切换开关 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="trading-mode-switch-template">
+<div id="trading-mode-switch" class="mode-switch-container" style="
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+">
+    <span class="switch-label" style="font-size: 13px; color: #666;">交易模式:</span>
+    <div class="mode-buttons" style="display: flex; gap: 4px;">
+        {{#modes}}
+        <button class="mode-btn {{#active}}active{{/active}}" data-mode="{{id}}" style="
+            padding: 6px 16px;
+            border: 2px solid {{#active}}{{color}}{{/active}}{{^active}}#e8e8e8{{/active}};
+            border-radius: 6px;
+            background: {{#active}}{{color}}{{/active}}{{^active}}#fff{{/active}};
+            color: {{#active}}#fff{{/active}}{{^active}}#666{{/active}};
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        ">
+            {{name}}
+        </button>
+        {{/modes}}
+    </div>
+    <span class="mode-warning" style="font-size: 12px; color: #fa8c16;">{{warning}}</span>
+</div>
+<script>
+    // 模式切换事件
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const mode = this.dataset.mode;
+            switchTradingMode(mode);
+        });
+    });
+    
+    async function switchTradingMode(mode) {
+        const response = await fetch('/api/v3/dashboard/trading-mode', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({mode: mode})
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification(result.message, 'success');
+            updateModeSwitchUI(mode);
+        } else {
+            showNotification(result.error, 'error');
+        }
+    }
+</script>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 1: 模拟盘面板 Tab 按钮（第15个Tab） -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="simulation-tab-button-template">
+<button class="tab-btn" data-tab="simulation" style="
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+">
+    <i class="fa-solid fa-flask" style="color: #722ed1;"></i>
+    <span>模拟盘</span>
+    <span class="tab-badge" style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 6px;
+        background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%);
+        color: #fff;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+    ">SIM</span>
+</button>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 1: 模拟盘面板（第15个Tab） -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="simulation-panel-template">
+<div id="simulation-panel" class="dashboard-panel" style="padding: 20px;">
+    <!-- 账户选择器 -->
+    <div class="account-selector" style="margin-bottom: 20px;">
+        <select id="sim-account-select" style="
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+        ">
+            {{#accounts}}
+            <option value="{{account_id}}" {{#selected}}selected{{/selected}}>
+                {{name}} (NAV: {{nav}} | 收益: {{pnl_pct}}%)
+            </option>
+            {{/accounts}}
+        </select>
+        <button onclick="refreshSimulationData()" style="
+            margin-left: 10px;
+            padding: 8px 16px;
+            background: #722ed1;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        ">刷新</button>
+    </div>
+
+    <!-- 账户概况卡片 -->
+    <div class="account-overview" style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    ">
+        <div class="metric-card" style="
+            background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+        ">
+            <div style="font-size: 12px; opacity: 0.8;">总资产</div>
+            <div style="font-size: 24px; font-weight: 600;">¥{{account_overview.total_assets}}</div>
+            <div style="font-size: 14px; margin-top: 8px;">
+                NAV: {{account_overview.nav}}
+            </div>
+        </div>
+        
+        <div class="metric-card" style="
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 20px;
+            border-radius: 12px;
+        ">
+            <div style="font-size: 12px; color: #666;">累计收益</div>
+            <div style="font-size: 24px; font-weight: 600; color: {{#account_overview.pnl_positive}}#52c41a{{/account_overview.pnl_positive}}{{^account_overview.pnl_positive}}#f5222d{{/account_overview.pnl_positive}};">
+                {{#account_overview.pnl_positive}}+{{/account_overview.pnl_positive}}{{account_overview.pnl_pct}}%
+            </div>
+            <div style="font-size: 14px; color: #999; margin-top: 8px;">
+                ¥{{account_overview.pnl}}
+            </div>
+        </div>
+        
+        <div class="metric-card" style="
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 20px;
+            border-radius: 12px;
+        ">
+            <div style="font-size: 12px; color: #666;">可用资金</div>
+            <div style="font-size: 24px; font-weight: 600; color: #333;">¥{{account_overview.cash}}</div>
+            <div style="font-size: 14px; color: #999; margin-top: 8px;">
+                持仓市值: ¥{{account_overview.market_value}}
+            </div>
+        </div>
+        
+        <div class="metric-card" style="
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 20px;
+            border-radius: 12px;
+        ">
+            <div style="font-size: 12px; color: #666;">持仓/交易</div>
+            <div style="font-size: 24px; font-weight: 600; color: #333;">{{account_overview.position_count}}</div>
+            <div style="font-size: 14px; color: #999; margin-top: 8px;">
+                交易次数: {{account_overview.trade_count}}
+            </div>
+        </div>
+    </div>
+
+    <!-- 中部：左右分栏布局 -->
+    <div class="middle-section" style="
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    ">
+        <!-- 中部左: 模拟持仓表格 -->
+        <div class="positions-section" style="
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 16px;
+        ">
+            <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333;">
+                模拟持仓明细
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #fafafa;">
+                        <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e8e8e8; font-size: 13px;">股票</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">持仓</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">可卖</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">成本</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">现价</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">市值</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">盈亏</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#positions}}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #f0f0f0;">
+                            <div style="font-weight: 500; font-size: 14px;">{{name}}</div>
+                            <div style="font-size: 11px; color: #999;">{{code}}</div>
+                        </td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{qty}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: {{#available}}#52c41a{{/available}}{{^available}}#999{{/available}};">{{available_qty}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{cost_price}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{current_price}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{market_value}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: {{#pnl_positive}}#52c41a{{/pnl_positive}}{{^pnl_positive}}#f5222d{{/pnl_positive}};">
+                            {{pnl_pct}}%
+                        </td>
+                    </tr>
+                    {{/positions}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 中部右: 图表区域 -->
+        <div class="charts-section" style="
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        ">
+            <!-- 模拟盘净值曲线 -->
+            <div class="chart-card" style="
+                background: #fff;
+                border: 1px solid #e8e8e8;
+                border-radius: 12px;
+                padding: 16px;
+                flex: 1;
+            ">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333;">
+                    模拟盘净值曲线
+                </div>
+                <div id="c-sim-nav" style="height: 160px;">
+                    <canvas id="simNavChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 模拟vs实盘对比 -->
+            <div class="chart-card" style="
+                background: #fff;
+                border: 1px solid #e8e8e8;
+                border-radius: 12px;
+                padding: 16px;
+                flex: 1;
+            ">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333;">
+                    模拟 vs 实盘对比
+                </div>
+                <div id="c-sim-compare" style="height: 120px;">
+                    <canvas id="simCompareChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部: 最近委托/成交记录 -->
+    <div class="bottom-section" style="
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 16px;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="font-size: 16px; font-weight: 600; color: #333;">最近交易记录</div>
+            <div class="record-tabs" style="display: flex; gap: 8px;">
+                <button class="record-tab active" data-tab="trades" style="
+                    padding: 6px 16px;
+                    background: #722ed1;
+                    color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 13px;
+                    cursor: pointer;
+                ">成交记录</button>
+                <button class="record-tab" data-tab="orders" style="
+                    padding: 6px 16px;
+                    background: #f0f0f0;
+                    color: #666;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 13px;
+                    cursor: pointer;
+                ">委托记录</button>
+            </div>
+        </div>
+
+        <!-- 成交记录表格 -->
+        <div id="records-trades" class="records-content">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #fafafa;">
+                        <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e8e8e8; font-size: 13px;">时间</th>
+                        <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e8e8e8; font-size: 13px;">股票</th>
+                        <th style="padding: 10px; text-align: center; border-bottom: 1px solid #e8e8e8; font-size: 13px;">方向</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">价格</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">数量</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">金额</th>
+                        <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e8e8e8; font-size: 13px;">手续费</th>
+                        <th style="padding: 10px; text-align: center; border-bottom: 1px solid #e8e8e8; font-size: 13px;">策略</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#trades}}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{time}}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #f0f0f0;">
+                            <div style="font-weight: 500; font-size: 13px;">{{name}}</div>
+                            <div style="font-size: 11px; color: #999;">{{code}}</div>
+                        </td>
+                        <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f0f0f0;">
+                            <span style="
+                                display: inline-block;
+                                padding: 2px 8px;
+                                background: {{#is_buy}}#f5222d{{/is_buy}}{{^is_buy}}#52c41a{{/is_buy}};
+                                color: #fff;
+                                border-radius: 4px;
+                                font-size: 11px;
+                            ">{{#is_buy}}买入{{/is_buy}}{{^is_buy}}卖出{{/is_buy}}</span>
+                        </td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{price}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{qty}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px;">{{amount}}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #999;">{{fees}}</td>
+                        <td style="padding: 10px; text-align: center; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #722ed1;">{{strategy}}</td>
+                    </tr>
+                    {{/trades}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 交易记录Tab切换
+    document.querySelectorAll('.record-tab').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            switchRecordTab(tab);
+        });
+    });
+    
+    function switchRecordTab(tab) {
+        // 更新按钮样式
+        document.querySelectorAll('.record-tab').forEach(b => {
+            b.style.background = '#f0f0f0';
+            b.style.color = '#666';
+        });
+        event.target.style.background = '#722ed1';
+        event.target.style.color = '#fff';
+        
+        // 显示对应内容
+        document.querySelectorAll('.records-content').forEach(c => {
+            c.style.display = 'none';
+        });
+        document.getElementById('records-' + tab).style.display = 'block';
+    }
+    
+    // 账户选择变更
+    document.getElementById('sim-account-select')?.addEventListener('change', function() {
+        refreshSimulationData();
+    });
+    
+    // 刷新数据
+    async function refreshSimulationData() {
+        const accountId = document.getElementById('sim-account-select').value;
+        const response = await fetch(`/api/v3/dashboard/simulation?account_id=${accountId}`);
+        const data = await response.json();
+        if (data.enabled) {
+            renderSimulationPanel(data);
+        }
+    }
+    
+    // 渲染模拟盘面板
+    function renderSimulationPanel(data) {
+        // 更新资金卡片
+        updateFundCards(data.account_overview);
+        
+        // 更新持仓表格
+        updatePositionsTable(data.positions);
+        
+        // 更新图表
+        updateSimNavChart(data.nav_curve);
+        updateSimCompareChart(data.performance);
+        
+        // 更新交易记录
+        updateTradesTable(data.trades);
+    }
+    
+    // 初始化图表
+    function initSimCharts() {
+        // 模拟盘净值曲线
+        const navCtx = document.getElementById('simNavChart')?.getContext('2d');
+        if (navCtx) {
+            new Chart(navCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '模拟盘净值',
+                        data: [],
+                        borderColor: '#722ed1',
+                        backgroundColor: 'rgba(114, 46, 209, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+        
+        // 模拟vs实盘对比
+        const compareCtx = document.getElementById('simCompareChart')?.getContext('2d');
+        if (compareCtx) {
+            new Chart(compareCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '实盘',
+                            data: [],
+                            borderColor: '#52c41a',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: '模拟',
+                            data: [],
+                            borderColor: '#722ed1',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+    }
+    
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        initSimCharts();
+        refreshSimulationData();
+    });
+</script>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 3: 组合净值曲线（总览面板增强） -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="combined-nav-chart-template">
+<div id="combined-nav-chart" class="chart-container" style="height: 300px;">
+    <canvas id="navChart"></canvas>
+</div>
+<script>
+    // 初始化净值曲线图
+    async function initNavChart() {
+        const response = await fetch('/api/v3/dashboard/combined-nav?days=30');
+        const data = await response.json();
+        
+        const ctx = document.getElementById('navChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [
+                    {
+                        label: '实盘净值',
+                        data: data.real_nav,
+                        borderColor: '#52c41a',
+                        backgroundColor: 'rgba(82, 196, 26, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: '模拟盘净值',
+                        data: data.sim_nav,
+                        borderColor: '#722ed1',
+                        backgroundColor: 'rgba(114, 46, 209, 0.05)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    },
+                    {
+                        label: '基准',
+                        data: data.benchmark,
+                        borderColor: '#999',
+                        borderWidth: 1,
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(4);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', initNavChart);
+</script>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 组件 4: 数据筛选器（历史数据面板） -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script type="text/template" id="trade-history-filter-template">
+<div id="trade-history-filter" class="filter-bar" style="
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fafafa;
+    border-radius: 8px;
+    margin-bottom: 16px;
+">
+    <span class="filter-label" style="font-size: 13px; color: #666; line-height: 32px;">筛选:</span>
+    {{#filters}}
+    <button class="filter-btn {{#active}}active{{/active}}" data-filter="{{id}}" style="
+        padding: 6px 16px;
+        border: 1px solid {{#active}}{{color}}{{/active}}{{^active}}#d9d9d9{{/active}};
+        border-radius: 16px;
+        background: {{#active}}{{color}}{{/active}}{{^active}}#fff{{/active}};
+        color: {{#active}}#fff{{/active}}{{^active}}#666{{/active}};
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    ">
+        <span class="badge" style="
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 6px;
+            background: {{#active}}rgba(255,255,255,0.3){{/active}}{{^active}}#f0f0f0{{/active}};
+            border-radius: 9px;
+            font-size: 11px;
+        ">{{count}}</span>
+        {{name}}
+    </button>
+    {{/filters}}
+</div>
+
+<!-- 交易记录表格 -->
+<div class="trade-table-container">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #fafafa;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e8e8e8;">时间</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e8e8e8;">类型</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e8e8e8;">股票</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e8e8e8;">方向</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e8e8e8;">价格</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e8e8e8;">数量</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e8e8e8;">金额</th>
+                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e8e8e8;">来源</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#trades}}
+            <tr style="background: {{#even}}#fff{{/even}}{{^even}}#fafafa{{/even}};">
+                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px;">
+                    {{time}}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">
+                    <span style="
+                        display: inline-block;
+                        padding: 2px 8px;
+                        background: {{badge_color}};
+                        color: #fff;
+                        border-radius: 4px;
+                        font-size: 11px;
+                    ">{{account_type}}</span>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">
+                    <div style="font-weight: 500;">{{name}}</div>
+                    <div style="font-size: 12px; color: #999;">{{code}}</div>
+                </td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0;">
+                    <span style="color: {{#is_buy}}#f5222d{{/is_buy}}{{^is_buy}}#52c41a{{/is_buy}}; font-weight: 500;">
+                        {{#is_buy}}买入{{/is_buy}}{{^is_buy}}卖出{{/is_buy}}
+                    </span>
+                </td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0;">{{price}}</td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0;">{{qty}}</td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0;">{{amount}}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #666;">
+                    {{strategy_id}}
+                </td>
+            </tr>
+            {{/trades}}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 筛选按钮事件
+    document.querySelectorAll('#trade-history-filter .filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            applyTradeFilter(filter);
+        });
+    });
+    
+    async function applyTradeFilter(filter) {
+        const response = await fetch(`/api/v3/dashboard/trade-history?filter=${filter}`);
+        const data = await response.json();
+        renderTradeTable(data.trades);
+        updateFilterButtons(data.filters);
+    }
+</script>
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 主控脚本：初始化所有 V3.1 组件 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+    // V3.1 组件管理器
+    const V31Dashboard = {
+        state: {
+            simulationEnabled: true,
+            currentAccountId: null,
+            tradingMode: 'real'
+        },
+        
+        // 初始化所有组件
+        async init() {
+            console.log('[V3.1] 初始化模拟盘组件...');
+            
+            // 1. 渲染状态徽章
+            await this.renderStatusBadge();
+            
+            // 2. 渲染模式切换开关
+            await this.renderModeSwitch();
+            
+            // 3. 检查模拟盘状态
+            await this.checkSimulationStatus();
+            
+            console.log('[V3.1] 组件初始化完成');
+        },
+        
+        // 渲染状态徽章
+        async renderStatusBadge() {
+            try {
+                const response = await fetch('/api/v3/dashboard/simulation-status');
+                const data = await response.json();
+                
+                if (data.visible) {
+                    const badge = document.getElementById('simulation-status-badge');
+                    if (badge) {
+                        badge.style.display = 'flex';
+                        badge.querySelector('.badge-text').textContent = data.text;
+                    }
+                }
+            } catch (e) {
+                console.error('[V3.1] 状态徽章渲染失败:', e);
+            }
+        },
+        
+        // 渲染模式切换开关
+        async renderModeSwitch() {
+            try {
+                const response = await fetch('/api/v3/dashboard/trading-mode');
+                const data = await response.json();
+                
+                this.state.tradingMode = data.current_mode;
+                // 渲染开关UI...
+            } catch (e) {
+                console.error('[V3.1] 模式开关渲染失败:', e);
+            }
+        },
+        
+        // 检查模拟盘状态
+        async checkSimulationStatus() {
+            try {
+                const response = await fetch('/api/v3/dashboard/v31/all');
+                const data = await response.json();
+                
+                this.state.simulationEnabled = data.simulation_enabled;
+                
+                if (!data.simulation_enabled) {
+                    console.warn('[V3.1] 模拟盘系统未启用');
+                }
+            } catch (e) {
+                console.error('[V3.1] 状态检查失败:', e);
+            }
+        }
+    };
+    
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => V31Dashboard.init());
+    } else {
+        V31Dashboard.init();
+    }
+</script>

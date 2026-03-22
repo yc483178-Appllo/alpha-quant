@@ -1,11 +1,13 @@
 """
 看板V3.0 后端数据对接服务
-功能: 将V6.0各模块数据实时推送给看板前端
+功能: 将V6.0/V6.1各模块数据实时推送给看板前端
 实现: WebSocket + REST API 双模式
 """
 
 import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import json
 import asyncio
 import logging
@@ -35,6 +37,15 @@ try:
 except ImportError as e:
     logging.warning(f"V6.0模块导入警告: {e}")
     V6_AVAILABLE = False
+
+# 导入V6.1模拟盘模块
+try:
+    from modules.simulation_trading_engine import get_simulation_engine
+    from modules.simulation_models import SimOrder
+    SIMULATION_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"V6.1模拟盘模块导入警告: {e}")
+    SIMULATION_AVAILABLE = False
 
 logger = logging.getLogger("DashboardDataBridge")
 
@@ -107,7 +118,7 @@ class DashboardState:
 class DashboardDataBridge:
     """
     看板数据桥接器
-    负责从V6.0各模块收集数据，推送给看板前端
+    负责从V6.0/V6.1各模块收集数据，推送给看板前端
     """
 
     def __init__(self, config_path: str = "config.json"):
@@ -123,11 +134,14 @@ class DashboardDataBridge:
         self.risk_engine = None
         self.sentiment_pipeline = None
         self.portfolio_optimizer = None
+        
+        # V6.1模拟盘模块连接器
+        self.simulation_engine = None
 
         self._init_connectors()
 
     def _init_connectors(self):
-        """初始化V6.0模块连接"""
+        """初始化V6.0/V6.1模块连接"""
         if not V6_AVAILABLE:
             logger.warning("V6.0模块不可用，使用模拟数据")
             return
@@ -167,6 +181,14 @@ class DashboardDataBridge:
             logger.info("✅ 政权自适应组合优化器已连接")
         except Exception as e:
             logger.warning(f"组合优化器连接失败: {e}")
+        
+        # V6.1 模拟盘引擎
+        try:
+            if SIMULATION_AVAILABLE:
+                self.simulation_engine = get_simulation_engine(self.config_path)
+                logger.info("✅ V6.1模拟盘引擎已连接")
+        except Exception as e:
+            logger.warning(f"模拟盘引擎连接失败: {e}")
 
     def register_socketio(self, socketio):
         """注册SocketIO实例"""
@@ -1193,6 +1215,311 @@ if WS_AVAILABLE:
                 })
         except Exception as e:
             logger.error(f"组合优化失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    # ═══════════════════════════════════════════════════════════════
+    # V6.1 模拟盘API端点
+    # ═══════════════════════════════════════════════════════════════
+
+    @app.route('/v3/api/simulation/account', methods=['GET'])
+    def api_simulation_account():
+        """
+        获取模拟账户信息
+        GET /v3/api/simulation/account
+        """
+        try:
+            if bridge.simulation_engine:
+                accounts = bridge.simulation_engine.get_accounts()
+                if accounts:
+                    account = accounts[0]  # 返回默认账户
+                    return jsonify({
+                        "success": True,
+                        "account": account.to_dict()
+                    })
+                return jsonify({"success": False, "message": "无模拟账户"})
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟账户失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/account', methods=['POST'])
+    def api_simulation_account_create():
+        """
+        创建模拟账户
+        POST {"account_name": "测试账户", "initial_capital": 1000000}
+        """
+        try:
+            data = request.get_json() or {}
+            if bridge.simulation_engine:
+                account = bridge.simulation_engine.create_account(
+                    account_name=data.get('account_name', '模拟账户'),
+                    initial_capital=data.get('initial_capital', 1000000)
+                )
+                return jsonify({
+                    "success": True,
+                    "account": account.to_dict(),
+                    "message": "模拟账户创建成功"
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"创建模拟账户失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/account/reset', methods=['POST'])
+    def api_simulation_account_reset():
+        """
+        重置模拟账户
+        POST {"account_id": 1}
+        """
+        try:
+            data = request.get_json() or {}
+            if bridge.simulation_engine:
+                account_id = data.get('account_id', 1)
+                result = bridge.simulation_engine.reset_account(account_id)
+                return jsonify({
+                    "success": result,
+                    "message": "账户重置成功" if result else "账户重置失败"
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"重置模拟账户失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/positions')
+    def api_simulation_positions():
+        """
+        获取模拟持仓
+        GET /v3/api/simulation/positions?account_id=1
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            if bridge.simulation_engine:
+                positions = bridge.simulation_engine.get_positions(account_id)
+                return jsonify({
+                    "success": True,
+                    "count": len(positions),
+                    "positions": [p.to_dict() for p in positions]
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟持仓失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/orders', methods=['GET'])
+    def api_simulation_orders_get():
+        """
+        获取模拟订单
+        GET /v3/api/simulation/orders?account_id=1&status=pending
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            status = request.args.get('status', None)
+            if bridge.simulation_engine:
+                orders = bridge.simulation_engine.get_orders(account_id, status)
+                return jsonify({
+                    "success": True,
+                    "count": len(orders),
+                    "orders": [o.to_dict() for o in orders]
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟订单失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/orders', methods=['POST'])
+    def api_simulation_orders_post():
+        """
+        提交模拟订单
+        POST {
+            "account_id": 1,
+            "stock_code": "600519",
+            "action": "buy|sell",
+            "quantity": 100,
+            "price": 1900.0,
+            "order_type": "limit|market",
+            "strategy": "strategy_name"
+        }
+        """
+        try:
+            data = request.get_json() or {}
+            if not bridge.simulation_engine:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+            
+            account_id = data.get('account_id', 1)
+            order, message = bridge.simulation_engine.submit_order(
+                account_id=account_id,
+                stock_code=data.get('stock_code'),
+                action=data.get('action'),
+                quantity=data.get('quantity', 0),
+                price=data.get('price'),
+                order_type=data.get('order_type', 'limit'),
+                strategy=data.get('strategy', ''),
+                signal_id=data.get('signal_id')
+            )
+            
+            if order:
+                return jsonify({
+                    "success": True,
+                    "order": order.to_dict(),
+                    "message": message
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": message
+                })
+        except Exception as e:
+            logger.error(f"提交模拟订单失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/orders/<order_id>', methods=['DELETE'])
+    def api_simulation_orders_cancel(order_id):
+        """
+        撤销模拟订单
+        DELETE /v3/api/simulation/orders/{order_id}
+        """
+        try:
+            data = request.get_json() or {}
+            account_id = data.get('account_id', 1)
+            if bridge.simulation_engine:
+                success, message = bridge.simulation_engine.cancel_order(account_id, order_id)
+                return jsonify({"success": success, "message": message})
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"撤销模拟订单失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/transactions')
+    def api_simulation_transactions():
+        """
+        获取模拟成交记录
+        GET /v3/api/simulation/transactions?account_id=1&limit=50
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            limit = request.args.get('limit', 50, type=int)
+            if bridge.simulation_engine:
+                transactions = bridge.simulation_engine.get_transactions(account_id, limit)
+                return jsonify({
+                    "success": True,
+                    "count": len(transactions),
+                    "transactions": [t.to_dict() for t in transactions]
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟成交记录失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/fundflow')
+    def api_simulation_fundflow():
+        """
+        获取资金流水
+        GET /v3/api/simulation/fundflow?account_id=1&limit=50
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            limit = request.args.get('limit', 50, type=int)
+            if bridge.simulation_engine:
+                fundflow = bridge.simulation_engine.get_fund_flow(account_id, limit)
+                return jsonify({
+                    "success": True,
+                    "count": len(fundflow),
+                    "fundflow": [f.to_dict() for f in fundflow]
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取资金流水失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/performance')
+    def api_simulation_performance():
+        """
+        获取模拟盘业绩指标
+        GET /v3/api/simulation/performance?account_id=1
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            if bridge.simulation_engine:
+                performance = bridge.simulation_engine.get_performance(account_id)
+                return jsonify({
+                    "success": True,
+                    "performance": performance.to_dict()
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟盘业绩失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/equity_curve')
+    def api_simulation_equity_curve():
+        """
+        获取模拟盘权益曲线
+        GET /v3/api/simulation/equity_curve?account_id=1&days=30
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            days = request.args.get('days', 30, type=int)
+            if bridge.simulation_engine:
+                curve = bridge.simulation_engine.get_equity_curve(account_id, days)
+                return jsonify({
+                    "success": True,
+                    "days": days,
+                    "data_points": len(curve),
+                    "equity_curve": curve
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取权益曲线失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/dashboard')
+    def api_simulation_dashboard():
+        """
+        获取模拟盘看板数据
+        GET /v3/api/simulation/dashboard?account_id=1
+        """
+        try:
+            account_id = request.args.get('account_id', 1, type=int)
+            if bridge.simulation_engine:
+                dashboard_data = bridge.simulation_engine.get_dashboard_data(account_id)
+                return jsonify({
+                    "success": True,
+                    **dashboard_data
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"获取模拟盘看板失败: {e}")
+            return jsonify({"success": False, "message": str(e)})
+
+    @app.route('/v3/api/simulation/match', methods=['POST'])
+    def api_simulation_match():
+        """
+        手动触发订单撮合
+        POST {"account_id": 1}
+        """
+        try:
+            data = request.get_json() or {}
+            if bridge.simulation_engine:
+                bridge.simulation_engine.match_orders()
+                return jsonify({
+                    "success": True,
+                    "message": "订单撮合已执行"
+                })
+            else:
+                return jsonify({"success": False, "message": "模拟盘引擎未初始化"})
+        except Exception as e:
+            logger.error(f"订单撮合失败: {e}")
             return jsonify({"success": False, "message": str(e)})
 
     def run_bridge_server(host: str = "0.0.0.0", port: int = 5002):

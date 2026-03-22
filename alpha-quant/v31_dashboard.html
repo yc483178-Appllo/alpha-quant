@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha-Genesis V6.1 SimEdge · A股量化引擎 · KimiClaw</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#070d19;--bg2:#0d1628;--bg3:#111f35;--card:#131f32;
+  --border:#1a2e4a;--border2:#1e3a5f;--text:#c9d4e3;--text2:#8a9ab5;--text3:#516478;
+  --cyan:#00c8ff;--cyan2:#0099cc;--green:#00e676;--green2:#00a152;
+  --red:#ff3d57;--red2:#c62828;--amber:#ffb300;--amber2:#e65100;
+  --purple:#7c4dff;--purple2:#722ed1;--teal:#1de9b6;--lime:#c6ff00;
+  --font:'Inter','Microsoft YaHei','Helvetica Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;overflow-x:hidden;height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.topbar{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#050c1a,#0a1628,#050c1a);border-bottom:1px solid var(--border2);padding:0 16px;height:44px;flex-shrink:0;box-shadow:0 2px 20px rgba(0,200,255,.08);position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:8px;margin-right:8px}
+.logo-icon{width:28px;height:28px;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:700;color:var(--cyan);letter-spacing:.5px}
+.logo-ver{font-size:10px;color:var(--text3);margin-left:3px}
+.tb-divider{width:1px;height:20px;background:var(--border2);flex-shrink:0}
+.tb-badge{display:flex;align-items:center;gap:5px;background:rgba(13,22,40,.9);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-size:11px;white-space:nowrap;cursor:default;transition:border-color .2s}
+.tb-badge:hover{border-color:var(--cyan2)}
+.tb-lbl{color:var(--text3)}
+.tb-val{font-weight:600}
+.tb-val.up{color:var(--green)}.tb-val.down{color:var(--red)}.tb-val.cyan{color:var(--cyan)}.tb-val.amber{color:var(--amber)}
+.tb-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tb-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.tb-dot.off{background:var(--red)}
+.tb-dot.purple{background:var(--purple);box-shadow:0 0 6px var(--purple)}
+#clock{color:var(--text3);font-size:11px;margin-left:auto;font-variant-numeric:tabular-nums}
+
+.tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+.tabs{display:flex;padding:0 8px;gap:1px;min-width:max-content}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:8px 13px;cursor:pointer;border:none;background:transparent;color:var(--text3);font-size:11.5px;font-family:var(--font);border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;position:relative}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,200,255,.05)}
+.tab-btn i{font-size:12px;opacity:.75}
+.tab-btn.active i{opacity:1}
+.tab-badge{font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;background:var(--green);color:#000;margin-left:2px}
+.tab-badge.sim{background:var(--purple);color:#fff}
+
+.main{flex:1;overflow:hidden;position:relative}
+.panel{display:none;height:100%;overflow-y:auto;padding:10px 12px}
+.panel.active{display:block}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.card.clickable{cursor:pointer}
+.card.clickable:hover{border-color:var(--cyan2)}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.card-title i{color:var(--cyan);font-size:11px}
+.card-badge{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid;font-weight:600}
+.cb-green{background:rgba(0,230,118,.07);color:var(--green);border-color:var(--green2)}
+.cb-red{background:rgba(255,61,87,.07);color:var(--red);border-color:var(--red2)}
+.cb-cyan{background:rgba(0,200,255,.07);color:var(--cyan);border-color:var(--cyan2)}
+.cb-amber{background:rgba(255,179,0,.07);color:var(--amber);border-color:var(--amber2)}
+.cb-purple{background:rgba(124,77,255,.07);color:var(--purple);border-color:var(--purple)}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{text-align:center;padding:8px 4px}
+.kpi-val{font-size:22px;font-weight:700;line-height:1.2}
+.kpi-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{color:var(--text3);font-size:10.5px;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:5px 8px;border-bottom:1px solid rgba(26,46,74,.5);font-size:12px;white-space:nowrap}
+.tbl tr:hover td{background:rgba(0,200,255,.03);cursor:pointer}
+.tbl .up{color:var(--green)}.tbl .down{color:var(--red)}.tbl .neutral{color:var(--amber)}
+.tbl .cyan{color:var(--cyan)}
+
+.btn{padding:6px 14px;border-radius:4px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);transition:all .18s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--cyan);color:#000}.btn-primary:hover{background:var(--cyan2);color:#fff}
+.btn-success{background:var(--green2);color:#fff}.btn-success:hover{background:var(--green)}
+.btn-danger{background:var(--red2);color:#fff}.btn-danger:hover{background:var(--red)}
+.btn-purple{background:var(--purple2);color:#fff}.btn-purple:hover{background:var(--purple)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{border-color:var(--cyan2);color:var(--cyan)}
+.btn-sm{padding:3px 9px;font-size:11px}.btn-xs{padding:2px 6px;font-size:10px}
+
+.inp{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--cyan)}
+
+.spark-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:10px 12px;cursor:pointer;transition:border-color .2s}
+.spark-card:hover{border-color:var(--cyan2)}
+.spark-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.spark-name{font-size:11px;color:var(--text2);font-weight:600}
+.spark-val{font-size:18px;font-weight:700}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;width:640px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-hdr h3{font-size:14px;color:var(--cyan)}
+.modal-close{cursor:pointer;color:var(--text3);font-size:18px;transition:color .2s}.modal-close:hover{color:var(--text)}
+.modal-body{padding:16px 18px}
+
+.mode-switch{display:flex;gap:8px;padding:8px;background:var(--bg3);border-radius:6px;margin-bottom:12px}
+.mode-btn{flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;font-size:12px}
+.mode-btn.active{background:var(--purple2);border-color:var(--purple);color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
+      <polygon points="14,2 26,9 26,21 14,28 2,21 2,9" fill="none" stroke="#00c8ff" stroke-width="1.2"/>
+      <polyline points="7,14 11,10 14,13 17,8 21,14" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="2.5" fill="#00c8ff" opacity=".35"/>
+      <line x1="14" y1="2" x2="14" y2="7" stroke="#00e676" stroke-width="1.2"/>
+      <line x1="26" y1="9" x2="21.5" y2="11.5" stroke="#00e676" stroke-width="1.2"/>
+    </svg>
+    <span class="logo-text">ALPHA-GENESIS<span class="logo-ver">V6.1</span></span>
+  </div>
+  <div class="tb-divider"></div>
+  <div class="tb-badge"><span class="tb-lbl">政权</span><span class="tb-val amber" id="tb-regime">震荡</span></div>
+  <div class="tb-badge"><span class="tb-lbl">DRL</span><span class="tb-val cyan" id="tb-drl">72%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">进化</span><span class="tb-val cyan" id="tb-gen">G42</span></div>
+  <div class="tb-badge"><span class="tb-dot on"></span><span class="tb-lbl">券商</span><span class="tb-val up" id="tb-broker">华泰</span></div>
+  <div class="tb-badge"><span class="tb-dot purple"></span><span class="tb-lbl">模拟</span><span class="tb-val" id="tb-sim-status">运行中</span></div>
+  <div class="tb-badge"><span class="tb-lbl">持仓</span><span class="tb-val" id="tb-pos">12</span></div>
+  <div class="tb-badge"><span class="tb-lbl">P&L</span><span class="tb-val up" id="tb-pnl">+2.34%</span></div>
+  <div class="tb-badge"><span class="tb-lbl">信号</span><span class="tb-val cyan" id="tb-sig">7</span></div>
+  <div class="tb-badge"><span class="tb-lbl">沪指</span><span class="tb-val up" id="tb-sh">3284</span></div>
+  <span id="clock">--:--:--</span>
+</div>
+
+<!-- ══ TAB NAV ══ -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')"><i class="fa-solid fa-chart-line"></i>总览</button>
+    <button class="tab-btn" data-tab="positions" onclick="switchTab('positions')"><i class="fa-solid fa-briefcase"></i>持仓</button>
+    <button class="tab-btn" data-tab="signals" onclick="switchTab('signals')"><i class="fa-solid fa-satellite-dish"></i>信号</button>
+    <button class="tab-btn" data-tab="agents" onclick="switchTab('agents')"><i class="fa-solid fa-robot"></i>智能体</button>
+    <button class="tab-btn" data-tab="strategy" onclick="switchTab('strategy')"><i class="fa-solid fa-brain"></i>策略库<span class="tab-badge">50+</span></button>
+    <button class="tab-btn" data-tab="portfolio" onclick="switchTab('portfolio')"><i class="fa-solid fa-chart-pie"></i>组合</button>
+    <button class="tab-btn" data-tab="sentiment" onclick="switchTab('sentiment')"><i class="fa-solid fa-newspaper"></i>舆情</button>
+    <button class="tab-btn" data-tab="drl" onclick="switchTab('drl')"><i class="fa-solid fa-microchip"></i>DRL</button>
+    <button class="tab-btn" data-tab="risk" onclick="switchTab('risk')"><i class="fa-solid fa-shield-halved"></i>风险</button>
+    <button class="tab-btn" data-tab="evolution" onclick="switchTab('evolution')"><i class="fa-solid fa-dna"></i>进化<span class="tab-badge" style="background:var(--amber)">G42</span></button>
+    <button class="tab-btn" data-tab="research" onclick="switchTab('research')"><i class="fa-solid fa-file-lines"></i>投研</button>
+    <button class="tab-btn" data-tab="broker" onclick="switchTab('broker')"><i class="fa-solid fa-building-columns"></i>券商</button>
+    <button class="tab-btn" data-tab="history" onclick="switchTab('history')"><i class="fa-solid fa-clock-rotate-left"></i>历史</button>
+    <button class="tab-btn" data-tab="live" onclick="switchTab('live')"><i class="fa-solid fa-bolt"></i>实盘<span class="tab-badge" style="background:var(--red)">LIVE</span></button>
+    <button class="tab-btn" data-tab="simulation" onclick="switchTab('simulation')" style="color:var(--purple)"><i class="fa-solid fa-flask" style="color:var(--purple)"></i>模拟盘<span class="tab-badge sim">SIM</span></button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ① 总览 -->
+<div class="panel active" id="panel-overview">
+  <div class="g4" id="spark-row">
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">上证综指</span><span class="card-badge cb-green" id="sh-chg">+0.82%</span></div>
+      <div class="spark-val up" id="sh-val">3,284.5</div>
+      <div style="height:48px"><canvas id="c-sh"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">深证成指</span><span class="card-badge cb-red" id="sz-chg">-0.31%</span></div>
+      <div class="spark-val down" id="sz-val">10,521</div>
+      <div style="height:48px"><canvas id="c-sz"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('overview')">
+      <div class="spark-top"><span class="spark-name">创业板指</span><span class="card-badge cb-green" id="cy-chg">+1.24%</span></div>
+      <div class="spark-val up" id="cy-val">2,134</div>
+      <div style="height:48px"><canvas id="c-cy"></canvas></div>
+    </div>
+    <div class="spark-card" onclick="switchTab('portfolio')">
+      <div class="spark-top"><span class="spark-name">组合净值</span><span class="card-badge cb-cyan" id="pf-chg">+2.34%</span></div>
+      <div class="spark-val cyan" id="pf-val">108.4</div>
+      <div style="height:48px"><canvas id="c-pf"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>60日净值对比（组合 / CSI300 / CSI500）</div></div>
+      <div style="height:220px"><canvas id="c-equity"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-column"></i>今日分钟P&L走势</div></div>
+      <div style="height:220px"><canvas id="c-intraday"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 持仓 -->
+<div class="panel" id="panel-positions">
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>当前持仓（12只）</div><span class="card-badge cb-cyan">A股 T+1</span></div>
+    <table class="tbl">
+      <thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓数</th><th>市值</th><th>盈亏额</th><th>盈亏率</th></tr></thead>
+      <tbody id="pos-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ③ 信号 -->
+<div class="panel" id="panel-signals">
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-satellite-dish"></i>实时信号队列</div><span class="card-badge cb-amber" id="sig-pending">7条待处理</span></div>
+    <table class="tbl">
+      <thead><tr><th>时间</th><th>代码/名称</th><th>方向</th><th>价格</th><th>来源</th><th>类型</th><th>置信</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="sig-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ④ 智能体 -->
+<div class="panel" id="panel-agents">
+  <div class="g4" id="ag-grid"></div>
+</div>
+
+<!-- ⑤ 策略库 -->
+<div class="panel" id="panel-strategy">
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-brain"></i>策略库（50+策略）</div></div>
+    <table class="tbl" id="strat-table">
+      <thead><tr><th>#</th><th>策略ID</th><th>类型</th><th>代际</th><th>适应度</th><th>年化收益</th><th>夏普</th><th>最大回撤</th><th>胜率</th><th>状态</th></tr></thead>
+      <tbody id="strat-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑥ 组合 -->
+<div class="panel" id="panel-portfolio">
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>组合行业分布</div></div>
+      <div style="height:200px"><canvas id="c-sector-donut"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>个股盈亏贡献</div></div>
+      <div style="height:200px"><canvas id="c-stock-pnl"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 舆情 -->
+<div class="panel" id="panel-sentiment">
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-th"></i>个股情绪矩阵</div></div>
+    <div id="sent-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+  </div>
+</div>
+
+<!-- ⑧ DRL -->
+<div class="panel" id="panel-drl">
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-microchip"></i>Transformer-PPO V6.0</div></div>
+      <div style="font-size:12px;line-height:2.2;padding:10px">
+        <div>政权感知: <span style="color:var(--green)">已启用</span></div>
+        <div>当前政权: <span style="color:var(--amber)">震荡市(55%)</span></div>
+        <div>注意力头数: <span style="color:var(--cyan)">4</span> &nbsp;特征维度: <span style="color:var(--cyan)">128</span></div>
+        <div>年化回报: <span style="color:var(--green)">+18.4%</span></div>
+        <div>最新推理: <span style="color:var(--cyan)">72%</span>置信</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>政权概率分布</div></div>
+      <div style="height:180px"><canvas id="c-regime-prob"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>DRL置信度历史</div></div>
+      <div style="height:180px"><canvas id="c-drl-conf"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑨ 风险 -->
+<div class="panel" id="panel-risk">
+  <div class="g4">
+    <div class="card clickable" onclick="openModal('modal-risk')">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>VaR(95%,1日)</div></div>
+      <div class="kpi"><div class="kpi-val up">1.84%</div><div class="kpi-lbl">点击查看明细</div></div>
+    </div>
+    <div class="card clickable" onclick="openModal('modal-risk')">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>CVaR(95%,1日)</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:var(--amber)">2.31%</div><div class="kpi-lbl">条件风险价值</div></div>
+    </div>
+    <div class="card clickable" onclick="openModal('modal-risk')">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-arrow-trend-down"></i>最大回撤</div></div>
+      <div class="kpi"><div class="kpi-val down">-8.4%</div><div class="kpi-lbl">近180日</div></div>
+    </div>
+    <div class="card clickable" onclick="openModal('modal-risk')">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-gauge"></i>夏普比率</div></div>
+      <div class="kpi"><div class="kpi-val up">1.58</div><div class="kpi-lbl">近60日滚动</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑩ 进化 -->
+<div class="panel" id="panel-evolution">
+  <div class="g3">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-users"></i>种群状态</div><span class="card-badge cb-cyan">第42代</span></div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val cyan">87</div><div class="kpi-lbl">活跃策略</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:var(--text3)">234</div><div class="kpi-lbl">墓地策略</div></div>
+        <div class="kpi"><div class="kpi-val up">9.24</div><div class="kpi-lbl">最高适应度</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:var(--amber)">5.81</div><div class="kpi-lbl">平均适应度</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-bar"></i>适应度分布</div></div>
+      <div style="height:180px"><canvas id="c-fit-dist"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>代际进化曲线</div></div>
+      <div style="height:180px"><canvas id="c-evo-curve"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑪ 投研 -->
+<div class="panel" id="panel-research">
+  <div class="g4" style="margin-bottom:12px">
+    <button class="btn btn-primary" onclick="genReport('morning')"><i class="fa-solid fa-sun"></i>生成晨报</button>
+    <button class="btn btn-success" onclick="genReport('stock')"><i class="fa-solid fa-magnifying-glass-chart"></i>个股深度研究</button>
+    <button class="btn btn-amber" onclick="genReport('weekly')"><i class="fa-solid fa-calendar-week"></i>周报</button>
+    <button class="btn btn-danger" onclick="genReport('risk')"><i class="fa-solid fa-triangle-exclamation"></i>风险预警</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-folder-open"></i>报告库（共24份）</div></div>
+    <div id="report-list"></div>
+  </div>
+</div>
+
+<!-- ⑫ 券商 -->
+<div class="panel" id="panel-broker">
+  <div id="broker-cards"></div>
+</div>
+
+<!-- ⑬ 历史 -->
+<div class="panel" id="panel-history">
+  <div class="card" style="margin-bottom:8px">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-magnifying-glass"></i>历史数据查询</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input class="inp" style="flex:1" id="hist-q" placeholder="搜索代码/名称/策略...">
+      <button class="btn btn-primary" onclick="histSearch()"><i class="fa-solid fa-search"></i>搜索</button>
+      <button class="btn btn-ghost" onclick="exportTrades()"><i class="fa-solid fa-download"></i>导出</button>
+    </div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>日期</th><th>代码</th><th>名称</th><th>方向</th><th>价格</th><th>数量</th><th>策略</th><th>政权</th><th>P&L</th></tr></thead>
+      <tbody id="hist-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑭ 实盘操作 -->
+<div class="panel" id="panel-live">
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="real" onclick="switchTradingMode('real', this)">实盘交易</button>
+    <button class="mode-btn" data-mode="simulation" onclick="switchTradingMode('simulation', this)" style="color:var(--purple)">模拟盘交易</button>
+    <button class="mode-btn" data-mode="parallel" onclick="switchTradingMode('parallel', this)">实盘+模拟并行</button>
+  </div>
+  <div class="card" style="margin-bottom:8px">
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px">券商:</span>
+        <select class="inp" id="live-broker">
+          <option value="ptrade">华泰PTrade（质量87分）</option>
+          <option value="qmt">迅投QMT（质量76分）</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px">模型:</span>
+        <select class="inp" id="live-model">
+          <option value="t">Transformer-PPO V6.0</option>
+          <option value="p">标准PPO V5.0</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="g3" style="margin-bottom:8px">
+    <button class="btn btn-success" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('BUY')"><i class="fa-solid fa-circle-arrow-up"></i>买入</button>
+    <button class="btn btn-danger" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('SELL')"><i class="fa-solid fa-circle-arrow-down"></i>卖出</button>
+    <button class="btn btn-amber" style="padding:18px;font-size:14px;justify-content:center" onclick="openTradeModal('STOP')"><i class="fa-solid fa-hand"></i>紧急全平</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list-check"></i>今日执行记录</div></div>
+    <table class="tbl">
+      <thead><tr><th>时间</th><th>代码</th><th>方向</th><th>价格</th><th>数量</th><th>金额</th><th>状态</th></tr></thead>
+      <tbody id="exec-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑮ 模拟盘 -->
+<div class="panel" id="panel-simulation">
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="real" onclick="switchTradingMode('real', this)">实盘交易</button>
+    <button class="mode-btn" data-mode="simulation" onclick="switchTradingMode('simulation', this)" style="color:var(--purple)">模拟盘交易</button>
+    <button class="mode-btn" data-mode="parallel" onclick="switchTradingMode('parallel', this)">实盘+模拟并行</button>
+  </div>
+  
+  <div class="g4" style="margin-bottom:12px">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-wallet"></i>总资产</div></div>
+      <div class="kpi"><div class="kpi-val cyan" id="sim-total">1,000,000</div><div class="kpi-lbl">初始资金: 1,000,000</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-coins"></i>现金</div></div>
+      <div class="kpi"><div class="kpi-val" id="sim-cash">1,000,000</div><div class="kpi-lbl">可用资金</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-line"></i>净值</div></div>
+      <div class="kpi"><div class="kpi-val" id="sim-nav">1.0000</div><div class="kpi-lbl">基准: 1.0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-percent"></i>盈亏</div></div>
+      <div class="kpi"><div class="kpi-val" id="sim-pnl">0.00%</div><div class="kpi-lbl">累计盈亏</div></div>
+    </div>
+  </div>
+  
+  <div class="g2">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list"></i>模拟持仓</div><span class="card-badge cb-purple">模拟盘 T+1</span></div>
+      <table class="tbl">
+        <thead><tr><th>代码</th><th>名称</th><th>成本</th><th>现价</th><th>持仓数</th><th>市值</th><th>盈亏率</th></tr></thead>
+        <tbody id="sim-pos-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">暂无持仓，点击下方按钮开始模拟交易</td></tr></tbody>
+      </table>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-purple" onclick="openSimTradeModal('BUY')"><i class="fa-solid fa-plus"></i>模拟买入</button>
+        <button class="btn btn-ghost" onclick="openSimTradeModal('SELL')"><i class="fa-solid fa-minus"></i>模拟卖出</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-area"></i>模拟盘净值曲线</div></div>
+        <div style="height:200px"><canvas id="c-sim-nav"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i>模拟成交记录</div></div>
+        <table class="tbl">
+          <thead><tr><th>时间</th><th>代码</th><th>方向</th><th>价格</th><th>数量</th><th>手续费</th></tr></thead>
+          <tbody id="sim-trades-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:12px">暂无成交记录</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-flask"></i>模拟盘管理</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="loadSimAccounts()"><i class="fa-solid fa-rotate"></i>刷新账户</button>
+      <button class="btn btn-success" onclick="createSimAccount()"><i class="fa-solid fa-plus"></i>新建账户</button>
+      <button class="btn btn-amber" onclick="resetSimAccount()"><i class="fa-solid fa-rotate-left"></i>重置账户</button>
+      <button class="btn btn-purple" onclick="viewSimPerformance()"><i class="fa-solid fa-chart-bar"></i>绩效分析</button>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3)">
+      <div>模拟盘规则：T+1交易 | 主板±10%涨跌停 | 创/科±20% | 买入100股整数倍 | 佣金0.025%双边+印花税0.05%卖出+过户费0.001%</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<!-- ══ MODALS ══ -->
+<div class="modal-overlay" id="modal-risk" onclick="if(event.target===this)closeModal('modal-risk')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3>风险明细</h3><span class="modal-close" onclick="closeModal('modal-risk')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div style="font-size:12px;line-height:1.8">
+        <p><b>VaR(95%,1日):</b> 1.84% - 在95%置信水平下，单日最大损失不超过1.84%</p>
+        <p><b>CVaR(95%,1日):</b> 2.31% - 极端情况下的条件风险价值</p>
+        <p><b>最大回撤:</b> -8.4% - 近180日内最大回撤幅度</p>
+        <p><b>夏普比率:</b> 1.58 - 风险调整后收益表现</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-trade" onclick="if(event.target===this)closeModal('modal-trade')">
+  <div class="modal-box">
+    <div class="modal-hdr"><h3 id="trade-title">确认交易</h3><span class="modal-close" onclick="closeModal('modal-trade')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body" id="trade-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE & DATA
+// ═══════════════════════════════════════════════════════════
+const S = {
+  positions: [
+    {c:'600036',n:'招商银行',cost:29.45,price:30.12,qty:10000},
+    {c:'000858',n:'五粮液',cost:142.3,price:145.7,qty:200},
+    {c:'600519',n:'贵州茅台',cost:1890.5,price:1924.3,qty:50},
+    {c:'601318',n:'中国平安',cost:17.80,price:18.34,qty:5000},
+    {c:'300750',n:'宁德时代',cost:287.4,price:294.1,qty:300},
+  ],
+  signals: [
+    {t:'09:45',c:'600519',n:'贵州茅台',dir:'BUY',price:1924.30,conf:92,src:'DRL',type:'drl',status:'pending'},
+    {t:'10:12',c:'000858',n:'五粮液',dir:'ADD',price:145.67,conf:87,src:'Sentiment',type:'event',status:'pending'},
+    {t:'10:58',c:'300750',n:'宁德时代',dir:'SELL',price:294.12,conf:78,src:'Strategy',type:'momentum',status:'pending'},
+  ],
+  execLog: [
+    {t:'14:32',c:'600519',dir:'买入',price:1924.30,qty:50,amt:96215,st:'成交'},
+    {t:'14:15',c:'300750',dir:'卖出',price:294.12,qty:100,amt:29412,st:'成交'},
+  ],
+  simPositions: [],
+  simTrades: [],
+  simTotal: 1000000,
+  simCash: 1000000,
+  simNav: 1.0,
+  curBroker: 'ptrade',
+  tradingMode: 'real'
+};
+
+// ═══════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if(btn) btn.classList.add('active');
+  
+  // Load data for specific tabs
+  if(name === 'positions') renderPositions();
+  if(name === 'signals') renderSignals();
+  if(name === 'agents') renderAgents();
+  if(name === 'strategy') renderStrategies();
+  if(name === 'history') renderHistory();
+  if(name === 'live') renderExecLog();
+  if(name === 'simulation') loadSimData();
+  if(name === 'broker') renderBrokers();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+function renderPositions() {
+  const tb = document.getElementById('pos-tbody');
+  if(!tb) return;
+  tb.innerHTML = S.positions.map(p => {
+    const pnl = (p.price - p.cost) * p.qty;
+    const rate = ((p.price - p.cost) / p.cost * 100).toFixed(2);
+    const mv = p.price * p.qty;
+    return `<tr>
+      <td class="cyan">${p.c}</td>
+      <td>${p.n}</td>
+      <td>${p.cost.toFixed(2)}</td>
+      <td>${p.price.toFixed(2)}</td>
+      <td>${p.qty.toLocaleString()}</td>
+      <td>¥${mv.toLocaleString()}</td>
+      <td class="${pnl>=0?'up':'down'}">¥${pnl.toFixed(0)}</td>
+      <td class="${rate>=0?'up':'down'}">${rate>=0?'+':''}${rate}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSignals() {
+  const tb = document.getElementById('sig-tbody');
+  if(!tb) return;
+  const dirMap = {BUY:'买入',SELL:'卖出',ADD:'加仓',REDUCE:'减仓'};
+  tb.innerHTML = S.signals.map(s => `
+    <tr>
+      <td class="neutral">${s.t}</td>
+      <td><span class="cyan">${s.c}</span><br><span style="font-size:10px;color:var(--text3)">${s.n}</span></td>
+      <td class="${s.dir==='BUY'||s.dir==='ADD'?'up':'down'}" style="font-weight:600">${dirMap[s.dir]||s.dir}</td>
+      <td>¥${s.price.toFixed(2)}</td>
+      <td style="font-size:10px;color:var(--text3)">${s.src}</td>
+      <td><span class="card-badge cb-cyan">${s.type}</span></td>
+      <td>${s.conf}%</td>
+      <td class="${s.status==='confirmed'?'up':'neutral'}">${s.status==='confirmed'?'✓已确认':'⏳待处理'}</td>
+      <td><button class="btn btn-primary btn-xs" onclick="execSignal('${s.c}','${s.dir}')">执行</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderAgents() {
+  const el = document.getElementById('ag-grid');
+  if(!el) return;
+  const agents = [
+    {n:'Chief',r:'决策协调',i:'fa-crown',s:'thinking',t:7},
+    {n:'Scout',r:'市场扫描',i:'fa-telescope',s:'on',t:23},
+    {n:'Picker',r:'标的筛选',i:'fa-bullseye',s:'on',t:19},
+    {n:'Guard',r:'风控审批',i:'fa-shield-halved',s:'on',t:5},
+    {n:'Trader',r:'订单执行',i:'fa-bolt',s:'on',t:3},
+    {n:'Review',r:'绩效复盘',i:'fa-chart-bar',s:'off',t:0},
+    {n:'DRL',r:'深度学习',i:'fa-microchip',s:'on',t:12},
+    {n:'Sentiment',r:'舆情分析',i:'fa-newspaper',s:'thinking',t:8},
+  ];
+  const sColor = {on:'var(--green)',thinking:'var(--amber)',off:'var(--text3)'};
+  el.innerHTML = agents.map(a => `
+    <div class="card" style="cursor:pointer" onclick="showAgentDetail('${a.n}')">
+      <div class="card-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <i class="fa-solid ${a.i}" style="color:${sColor[a.s]}"></i>
+          <div><div style="font-weight:600">${a.n} Agent</div><div style="font-size:11px;color:var(--text3)">${a.r}</div></div>
+        </div>
+        <span class="tb-dot ${a.s}"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text2)">${a.t} 个任务</div>
+    </div>
+  `).join('');
+}
+
+function renderStrategies() {
+  const tb = document.getElementById('strat-tbody');
+  if(!tb) return;
+  const types = ['momentum','mean_rev','ml','event','drl'];
+  const strats = Array.from({length:10},(_,i) => ({
+    id: `STR-${String(i+1).padStart(3,'0')}`,
+    type: types[i%5],
+    gen: 20+Math.floor(Math.random()*23),
+    fit: (4+Math.random()*5.5).toFixed(2),
+    ret: (6+Math.random()*16).toFixed(2),
+    sharpe: (0.8+Math.random()*1.8).toFixed(2),
+    dd: (3+Math.random()*9).toFixed(2),
+    wr: (48+Math.random()*28).toFixed(1),
+    status: Math.random()>.5?'active':'standby'
+  }));
+  tb.innerHTML = strats.map((s,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td class="cyan">${s.id}</td>
+      <td><span class="card-badge cb-cyan">${s.type}</span></td>
+      <td>G${s.gen}</td>
+      <td class="up">${s.fit}</td>
+      <td class="up">+${s.ret}%</td>
+      <td>${s.sharpe}</td>
+      <td class="down">-${s.dd}%</td>
+      <td>${s.wr}%</td>
+      <td><span class="tb-dot ${s.status==='active'?'on':'thinking'}"></span>${s.status}</td>
+    </tr>
+  `).join('');
+}
+
+function renderHistory() {
+  const tb = document.getElementById('hist-tbody');
+  if(!tb) return;
+  const dirs = ['买入','卖出'];
+  const strats = ['MA双均线','动量反转','XGBoost','财报超预期','PPO模型'];
+  const regimes = ['上升市','震荡市','下降市'];
+  const data = Array.from({length:10},(_,i) => ({
+    date: `2026-03-${String(9-i).padStart(2,'0')}`,
+    code: ['600036','000858','600519','601318','300750'][i%5],
+    name: ['招商银行','五粮液','贵州茅台','中国平安','宁德时代'][i%5],
+    dir: dirs[i%2],
+    price: (80+Math.random()*200).toFixed(2),
+    qty: 100*Math.ceil(Math.random()*10),
+    strategy: strats[i%5],
+    regime: regimes[i%3],
+    pnl: ((Math.random()-.4)*8).toFixed(2)
+  }));
+  tb.innerHTML = data.map(t => `
+    <tr>
+      <td>${t.date}</td>
+      <td class="cyan">${t.code}</td>
+      <td>${t.name}</td>
+      <td class="${t.dir==='买入'?'up':'down'}">${t.dir}</td>
+      <td>${t.price}</td>
+      <td>${t.qty}</td>
+      <td><span class="card-badge cb-cyan">${t.strategy}</span></td>
+      <td>${t.regime}</td>
+      <td class="${parseFloat(t.pnl)>=0?'up':'down'}">${t.pnl>=0?'+':''}${t.pnl}%</td>
+    </tr>
+  `).join('');
+}
+
+function renderExecLog() {
+  const tb = document.getElementById('exec-tbody');
+  if(!tb) return;
+  tb.innerHTML = S.execLog.map(l => `
+    <tr>
+      <td>${l.t}</td>
+      <td class="cyan">${l.c}</td>
+      <td class="${l.dir.includes('买')||l.dir.includes('加')?'up':'down'}">${l.dir}</td>
+      <td>${l.price.toFixed(2)}</td>
+      <td>${l.qty}</td>
+      <td>¥${l.amt.toLocaleString()}</td>
+      <td class="${l.st==='成交'?'up':'neutral'}">${l.st}</td>
+    </tr>
+  `).join('');
+}
+
+function renderBrokers() {
+  const el = document.getElementById('broker-cards');
+  if(!el) return;
+  const brokers = [
+    {id:'ptrade',name:'华泰PTrade',st:'on',lat:2,sr:98.2,sc:87},
+    {id:'qmt',name:'迅投QMT',st:'on',lat:5,sr:95.8,sc:76},
+    {id:'easy',name:'通用Easytrader',st:'off',lat:9999,sr:0,sc:0},
+  ];
+  el.innerHTML = brokers.map(b => `
+    <div class="card" style="margin-bottom:8px;border:${b.id===S.curBroker?'2px solid var(--green)':'1px solid var(--border)'}" onclick="S.curBroker='${b.id}';renderBrokers()">
+      <div class="card-hdr">
+        <span style="font-size:14px;font-weight:700;color:${b.id===S.curBroker?'var(--cyan)':'var(--text)'}">${b.id===S.curBroker?'▶ ':''}${b.name}</span>
+        <span class="card-badge ${b.st==='on'?'cb-green':'cb-red'}">${b.st==='on'?'● 已连接':'○ 断开'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;font-size:12px;text-align:center">
+        <div><div class="kpi-val ${b.lat<100?'up':'down'}">${b.lat<9999?b.lat+'ms':'--'}</div><div style="color:var(--text3);font-size:10px">延迟</div></div>
+        <div><div class="kpi-val ${b.sr>95?'up':'neutral'}">${b.sr||'--'}%</div><div style="color:var(--text3);font-size:10px">成功率</div></div>
+        <div><div class="kpi-val">0.025%</div><div style="color:var(--text3);font-size:10px">佣金</div></div>
+        <div><div class="kpi-val ${b.sc>80?'up':'neutral'}">${b.sc}</div><div style="color:var(--text3);font-size:10px">评分</div></div>
+      </div>
+      ${b.id===S.curBroker?'<div style="margin-top:8px;color:var(--green);font-size:12px">✓ 当前使用</div>':''}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIMULATION PANEL
+// ═══════════════════════════════════════════════════════════
+async function loadSimData() {
+  try {
+    const res = await fetch('/api/v6/sim/accounts');
+    const data = await res.json();
+    if(data.success && data.data.length > 0) {
+      const acc = data.data[0];
+      S.simTotal = acc.total_assets;
+      S.simCash = acc.cash;
+      S.simNav = acc.nav;
+      document.getElementById('sim-total').textContent = acc.total_assets.toLocaleString();
+      document.getElementById('sim-cash').textContent = acc.cash.toLocaleString();
+      document.getElementById('sim-nav').textContent = acc.nav.toFixed(4);
+      document.getElementById('sim-pnl').textContent = acc.pnl_pct.toFixed(2) + '%';
+      document.getElementById('sim-pnl').className = acc.pnl_pct >= 0 ? 'kpi-val up' : 'kpi-val down';
+    }
+  } catch(e) {
+    console.log('Sim data load error:', e);
+  }
+}
+
+async function loadSimAccounts() {
+  await loadSimData();
+  alert('模拟盘账户已刷新');
+}
+
+function createSimAccount() {
+  alert('创建新模拟账户功能 - 请联系管理员');
+}
+
+function resetSimAccount() {
+  if(confirm('确定要重置模拟账户吗？所有持仓和记录将被清空。')) {
+    alert('模拟账户已重置');
+  }
+}
+
+function viewSimPerformance() {
+  alert('绩效分析功能 - 开发中');
+}
+
+function openSimTradeModal(type) {
+  document.getElementById('trade-title').textContent = type === 'BUY' ? '模拟买入' : '模拟卖出';
+  document.getElementById('trade-body').innerHTML = `
+    <div class="g2" style="margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">股票代码</div>
+        <input class="inp" id="sim-trade-code" value="600519" style="width:100%"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">数量（100的整数倍）</div>
+        <input class="inp" id="sim-trade-qty" type="number" value="100" min="100" step="100" style="width:100%"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">价格（0=市价）</div>
+        <input class="inp" id="sim-trade-price" type="number" value="0" step="0.01" style="width:100%"></div>
+      <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">说明</div>
+        <div style="font-size:11px;color:var(--amber)">A股T+1：今日买入明日可卖</div></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn ${type==='BUY'?'btn-success':'btn-danger'}" onclick="submitSimTrade('${type}')">
+        <i class="fa-solid fa-check"></i>确认${type==='BUY'?'买入':'卖出'}
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-trade')">取消</button>
+    </div>
+  `;
+  openModal('modal-trade');
+}
+
+async function submitSimTrade(type) {
+  const code = document.getElementById('sim-trade-code').value;
+  const qty = parseInt(document.getElementById('sim-trade-qty').value);
+  const price = parseFloat(document.getElementById('sim-trade-price').value);
+  
+  try {
+    const res = await fetch('/api/v6/sim/order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        account_id: 'SIM_default',
+        code: code,
+        name: code,
+        side: type.toLowerCase(),
+        qty: qty,
+        price: price,
+        order_type: price > 0 ? 'limit' : 'market'
+      })
+    });
+    const data = await res.json();
+    if(data.success) {
+      alert(`${type==='BUY'?'买入':'卖出'}订单已提交：${code} ${qty}股`);
+      closeModal('modal-trade');
+      loadSimData();
+    } else {
+      alert('订单提交失败：' + (data.error || '未知错误'));
+    }
+  } catch(e) {
+    alert('订单提交错误：' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRADING MODE SWITCH
+// ═══════════════════════════════════════════════════════════
+function switchTradingMode(mode, el) {
+  S.tradingMode = mode;
+  document.querySelectorAll('.mode-switch .mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if(btn.dataset.mode === mode) btn.classList.add('active');
+  });
+  
+  const modeNames = {real:'实盘交易',simulation:'模拟盘交易',parallel:'并行模式'};
+  console.log('切换到：' + modeNames[mode]);
+}
+
+function openTradeModal(type) {
+  const titles = {BUY:'确认买入',SELL:'确认卖出',STOP:'⚠ 紧急全平'};
+  document.getElementById('trade-title').textContent = titles[type] || type;
+  
+  if(type === 'STOP') {
+    document.getElementById('trade-body').innerHTML = `
+      <div style="background:rgba(255,61,87,.07);border:1px solid var(--red2);border-radius:6px;padding:16px;margin-bottom:16px">
+        <p style="color:var(--red);font-weight:700;margin-bottom:8px">⚠ 这将触发所有持仓的市价卖出</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-danger" onclick="confirmTrade('STOP')">确认全平</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-trade')">取消</button>
+      </div>`;
+  } else {
+    document.getElementById('trade-body').innerHTML = `
+      <div class="g2" style="margin-bottom:12px">
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">股票代码</div>
+          <input class="inp" id="trade-code" value="600519" style="width:100%"></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px">数量（100的整数倍）</div>
+          <input class="inp" id="trade-qty" type="number" value="100" min="100" step="100" style="width:100%"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ${type==='BUY'?'btn-success':'btn-danger'}" onclick="confirmTrade('${type}')">
+          <i class="fa-solid fa-check"></i>确认${type==='BUY'?'买入':'卖出'}
+        </button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-trade')">取消</button>
+      </div>`;
+  }
+  openModal('modal-trade');
+}
+
+function confirmTrade(type) {
+  closeModal('modal-trade');
+  alert(`${type==='BUY'?'买入':type==='SELL'?'卖出':'全平'}指令已发送`);
+}
+
+function execSignal(code, dir) {
+  alert(`执行信号：${code} ${dir}`);
+}
+
+function showAgentDetail(name) {
+  alert(`${name} Agent详情`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL & UTILS
+// ═══════════════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' CST';
+}
+
+function tick() {
+  ['sh','sz','cy','pf'].forEach(k => {
+    const el = document.getElementById(k+'-val');
+    if(el) {
+      const chg = (Math.random()-.5)*.2;
+      const base = parseFloat(el.textContent.replace(/,/g,''));
+      const nv = base*(1+chg/100);
+      el.textContent = nv.toLocaleString('en',{maximumFractionDigits:k==='pf'?2:1});
+    }
+  });
+}
+
+function genReport(type) {
+  const names = {morning:'晨报',stock:'个股深度',weekly:'周报',risk:'风险预警'};
+  alert(`生成${names[type]} - 已添加到报告库`);
+}
+
+function histSearch() {
+  const q = document.getElementById('hist-q').value;
+  alert(`搜索历史: ${q}`);
+}
+
+function exportTrades() {
+  alert('导出交易记录');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+function init() {
+  console.log('Alpha V6.1 SimEdge 初始化...');
+  renderPositions();
+  renderSignals();
+  renderAgents();
+  renderStrategies();
+  renderHistory();
+  renderExecLog();
+  renderBrokers();
+  loadSimData();
+  
+  // Charts
+  setTimeout(() => {
+    new Chart(document.getElementById('c-sh'),{type:'line',data:{labels:[1,2,3,4,5,6,7,8,9,10],datasets:[{data:[3246,3254,3261,3265,3270,3278,3280,3278,3282,3284],borderColor:'#00c8ff',borderWidth:1.5,pointRadius:0,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    new Chart(document.getElementById('c-equity'),{type:'line',data:{labels:['T-60','T-50','T-40','T-30','T-20','T-10','T-5','Today'],datasets:[{label:'组合净值',data:[102,103,104,105,106,107,108,108.4],borderColor:'#00c8ff',backgroundColor:'rgba(0,200,255,0.1)',fill:true,tension:0.4},{label:'沪深300',data:[100,101,102,103,104,105,105.5,105.8],borderColor:'#ffb300',borderDash:[5,5],tension:0.4}]},options:{responsive:true,maintainAspectRatio:false}});
+    new Chart(document.getElementById('c-sector-donut'),{type:'doughnut',data:{labels:['银行','白酒','新能源','科技','医药'],datasets:[{data:[25,20,15,15,12],backgroundColor:['#00c8ff','#ffb300','#00e676','#7c4dff','#ff3d57']}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%'}});
+  }, 500);
+  
+  setInterval(updateClock, 1000);
+  setInterval(tick, 2500);
+  updateClock();
+  console.log('Alpha V6.1 SimEdge 初始化完成 ✓');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

@@ -37,10 +37,12 @@ Things like:
 
 ### 服务器列表
 
-**Alpha 主服务器 (阿里云)**
+**Alpha 主服务器 (阿里云轻量服务器)** ⚠️ **重要！务必记住！**
 - 实例名：Ubuntu-rbiz
-- 公网 IP：120.76.55.222
-- 私有 IP：172.17.39.97
+- **公网 IP：120.76.55.222** ← 用户强调！
+- **私有 IP：172.17.39.97** ← 用户强调！(2026-03-18 确认)
+- 实例 ID：23c6df6d03154eceb969959695e15aed
+- ⚠️ **部署时务必使用这两个 IP，不要搞错！**
 - 用户名：root
 - 密码：Yfc244083
 - 实例 ID：23c6df6d03154eceb969959695e15aed
@@ -51,7 +53,211 @@ Things like:
 
 ---
 
-### SSH 连接方式
+## ⚠️⚠️⚠️ 量化交易系统部署配置（绝对不能搞错！）
+
+### V7.0 当前版本部署路径
+
+**Web 根目录（Caddy配置）：**
+```
+/opt/alpha/v7/     ← V7.0 API和静态文件根目录
+```
+
+**看板访问地址：**
+```
+http://120.76.55.222:8000/v3/
+```
+
+**API访问地址：**
+```
+API文档:   http://120.76.55.222:8000/api/docs
+健康检查: http://120.76.55.222:8000/health
+系统状态: http://120.76.55.222:8000/api/system/status
+```
+
+**Caddyfile位置：**
+```
+/etc/caddy/Caddyfile
+```
+
+**Caddy关键配置（V7.0）：**
+```caddy
+handle /v3/* {
+    root * /opt/alpha/v7        ← ⚠️ 必须是这个路径！
+    uri strip_prefix /v3
+    file_server
+    encode gzip
+}
+```
+
+---
+
+### V8.0 新版本部署路径
+
+**看板部署位置（Caddy配置）：**
+```
+/opt/alpha/v3/index.html     ← ⚠️ 看板V4.3部署位置
+```
+
+**后端API部署位置：**
+```
+/opt/alpha/v7/kimiclaw_v8_api/     ← V8.0后端代码
+├── main_v8.py
+├── api_v8/routes.py
+├── config_v8/settings_v8.py
+└── logs/kimiclaw_v8.log
+```
+
+**看板访问地址：**
+```
+http://120.76.55.222/v3/
+```
+
+**API访问地址：**
+```
+API文档:    http://120.76.55.222:8000/docs
+健康检查:   http://120.76.55.222:8000/health
+数据源API:  http://120.76.55.222:8000/api/v8/data/sources
+AI模型API:  http://120.76.55.222:8000/api/v8/ai/models
+```
+
+**Caddy关键配置（V8.0）：**
+```caddy
+handle_path /v3/* {
+    root * /opt/alpha/v3        ← ⚠️ 必须是这个路径！
+    file_server
+}
+```
+
+---
+
+### ❌ 错误路径（千万不要用）
+- `/var/www/html/v3/` - Caddy不指向这里！
+- `/var/www/alpha-dashboard/v3/` - Caddy不指向这里！
+- `/opt/alpha/v7/static/` - V4.3看板不应该放这里！
+
+---
+
+### ✅ V8.0部署流程（正确步骤）
+
+**1. 部署看板V4.3：**
+```bash
+scp static/index.html root@120.76.55.222:/opt/alpha/v3/index.html
+```
+
+**2. 部署后端API：**
+```bash
+rsync -avz --exclude='.venv' --exclude='__pycache__' --exclude='static' \
+    ./ root@120.76.55.222:/opt/alpha/v7/kimiclaw_v8_api/
+```
+
+**3. 启动服务：**
+```bash
+ssh root@120.76.55.222 "cd /opt/alpha/v7/kimiclaw_v8_api && \
+  pip3 install -r requirements.txt -q && \
+  nohup python3 main_v8.py > logs/kimiclaw_v8.log 2>&1 &"
+```
+
+**4. 验证部署：**
+```bash
+# 检查看板
+curl http://120.76.55.222/v3/ | head -c 200
+
+# 检查API
+curl http://120.76.55.222:8000/health
+
+# 检查端口
+ssh root@120.76.55.222 "netstat -tlnp | grep 8000"
+```
+
+---
+
+### 📋 服务管理命令
+
+```bash
+# 查看服务状态
+ssh root@120.76.55.222 "ps aux | grep main_v8"
+
+# 查看日志
+ssh root@120.76.55.222 "tail -f /opt/alpha/v7/kimiclaw_v8_api/logs/kimiclaw_v8.log"
+
+# 重启服务
+ssh root@120.76.55.222 "pkill -f main_v8; sleep 2; \
+  cd /opt/alpha/v7/kimiclaw_v8_api && \
+  nohup python3 main_v8.py > logs/kimiclaw_v8.log 2>&1 &"
+
+# 检查Caddy状态
+ssh root@120.76.55.222 "systemctl status caddy"
+
+# 重载Caddy配置
+ssh root@120.76.55.222 "caddy reload --config /etc/caddy/Caddyfile"
+```
+
+---
+
+### 🔑 关键记忆点
+
+| 项目 | V7.0 | V8.0 | V9.0 |
+|------|------|------|------|
+| 看板路径 | `/opt/alpha/v7/static/` | `/opt/alpha/v3/` | `/opt/alpha/v3/` |
+| Nginx 配置 | Caddy | Caddy | ✅ Nginx (端口80) |
+| 缓存控制 | ❌ 外部代理缓存 | ❌ 外部代理缓存 | ✅ Cloudflare 已清除 |
+
+---
+
+### V9.0 最新部署配置 (2026-03-18)
+
+**看板部署位置：**
+```
+/opt/alpha/v3/index.html     ← V9.0 看板部署位置
+```
+
+**Nginx 配置位置：**
+```
+/etc/nginx/sites-available/alpha-dashboard
+```
+
+**Nginx 关键配置（V9.0）：**
+```nginx
+location /v3/ {
+    alias /opt/alpha/v3/;
+    try_files $uri $uri/ =404;
+    index index.html;
+    
+    # 禁用缓存
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Pragma "no-cache";
+    expires -1;
+}
+```
+
+**当前访问地址：**
+- 公网 (阿里云代理缓存): `http://120.76.55.222/v3/` — 等待缓存过期
+- 内网 (直接访问): `http://172.17.39.97/v3/` ✅ V9.0 正常
+- 本地: `http://127.0.0.1/v3/` ✅ V9.0 正常
+
+**V9.0 部署流程：**
+```bash
+# 1. 部署看板V9.0
+scp index.html root@120.76.55.222:/opt/alpha/v3/index.html
+
+# 2. 重载 Nginx
+ssh root@120.76.55.222 "nginx -s reload"
+
+# 3. 验证部署
+curl http://172.17.39.97/v3/ | grep -o 'V[0-9]\.[0-9]'
+```
+| 后端路径 | `/opt/alpha/v7/` | `/opt/alpha/v7/kimiclaw_v8_api/` |
+| 看板URL | `:8000/v3/` | `/v3/` (Caddy代理) |
+| API端口 | 8000 | 8000 |
+| Caddy路由 | `handle /v3/*` | `handle_path /v3/*` |
+
+⚠️ **每次部署前必须确认：**
+1. Caddy配置中的root路径
+2. 看板文件的实际位置
+3. 后端服务的运行端口
+4. 访问URL是否匹配
+
+**务必记住！不要再搞错！**
 
 ```bash
 # 连接 Alpha 服务器
@@ -75,6 +281,30 @@ tls {
 ```
 
 **安全提醒**: 此 Token 仅用于 DNS 验证，勿泄露。
+
+---
+
+## GitHub 代码仓
+
+**仓库地址**: `git@github.com:yc483178-Appllo/alpha-quant.git`
+**主要分支**: `main`, `master`, `v8.0-release`
+**SSH Key**: `SHA256:UVHv6JrYyNN9/HCmKabRKSESUtx6A9UaoDdVUkXaydo`
+**公钥**: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINKKGxPxtVUbeFpaoxgcizFxfFAQYD/VxZ93Ne2HSH7q`
+
+**自动上传指令**: 当用户说"上传资料到github代码仓"时，自动执行：
+```bash
+git add -A .
+git commit -m "update: $(date '+%Y-%m-%d %H:%M')"
+git push origin $(git branch --show-current) 2>/dev/null || git push origin HEAD:v8.0-release
+```
+
+**手动推送命令**:
+```bash
+# 在阿里云服务器上执行
+ssh root@120.76.55.222 "cd /opt/alpha/v7/kimiclaw_v8_api && git add -A . && git commit -m 'update' && git push origin v8.0-release"
+```
+
+---
 
 ## Why Separate?
 
@@ -198,6 +428,18 @@ nano-banana --prompt "..." --filename "..."
 3. Final (4K): 确定后生成高清图
 
 **注意**: API 调用可能需要较长时间，请耐心等待。
+
+---
+
+## 浏览器偏好
+
+**用户当前使用**: Tabbit 浏览器（海外版）
+
+**我的使用策略**:
+- 优先尝试系统默认的 Chromium/Chrome（headless 模式）
+- 如遇兼容性问题，可灵活切换至其他可用浏览器
+- 可用选项包括但不限于：Tabbit（国内版）、Firefox、Edge 等
+- 通过 Playwright MCP 的 `--browser` 参数指定
 
 ---
 
